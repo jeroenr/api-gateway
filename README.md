@@ -1,9 +1,9 @@
-minimal-scala-akka-http-seed
+Api Gateway
 =========================
 
-This is a seed project to create basic akka http projects.
+# Endpoint to register new service routes
+# Reverse proxy calls
+# Get token from auth service and add to request header
+# Manage user permissions
 
-* Has *Akka*, *Akka Stream*, *Akka Http*, *Scalaz*, *ScalaTest* and *ScalaMock* at their latest versions as dependencies.
-* Has *sbt-scalariform*, *sbt-scapegoat*, *scalastyle-sbt-plugin*,
-  *sbt-scoverage*, *sbt-revolver*, *sbt-native-packager*  sbt plugins
-* Test and it folders are setup.
+
