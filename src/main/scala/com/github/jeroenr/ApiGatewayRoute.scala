@@ -2,7 +2,7 @@ package com.github.jeroenr
 
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.actor.{Actor, ActorLogging, ActorSystem}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
@@ -12,38 +12,48 @@ import akka.stream.scaladsl.{Sink, Source}
 
 import scala.concurrent.ExecutionContext
 
-class ApiGatewayService()(implicit val system: ActorSystem, ec: ExecutionContext, materializer: Materializer) extends Config with Directives {
+trait RouteRepository extends Directives {
+  implicit val system: ActorSystem
+
+  implicit def ec: ExecutionContext
+
+  implicit def materializer: Materializer
+
   private val routeHolder = new AtomicReference[Route](reject)
 
-  private def currentRoute(): Route = routeHolder.get()
+  private var resourceToRoute = Map.empty[String, ProxyRoute]
 
-  private def addRoute(route: Route): Unit =
-    routeHolder.set(routeHolder.get() ~ route)
+  private def createRoute(resource: String, proxyRoute: ProxyRoute) =
+    pathPrefix(resource)(proxyRoute.route.apply)
 
-  def addRoute(resource: String, host: String, port: Int): Unit =
-    addRoute(pathPrefix(resource) { ctx =>
-      new ProxyRoute(host, port).route(ctx)
+  private def updatedRoutes(): Unit =
+    routeHolder.set(resourceToRoute.foldLeft[Route](reject) {
+      case (accumulated, (resource, proxyRoute)) => createRoute(resource, proxyRoute) ~ accumulated
     })
 
-  val gatewayRoute = (ctx: RequestContext) => currentRoute()(ctx)
+  def serviceRoutes(): List[ServiceRoute] =
+    resourceToRoute.map {
+      case (resource, proxyRoute) => ServiceRoute(resource, proxyRoute.host, proxyRoute.port)
+    }.toList
 
-}
-
-class RouteManager(apiGatewayService: ApiGatewayService) extends Actor with ActorLogging {
-  import RouteManager._
-  override def receive: Receive = {
-    case AddServiceRoute(name, host, resource, maybePort) =>
-      val port = maybePort.getOrElse(80)
-      log.info(s"Adding route for resource $resource on host $host:$port")
-      apiGatewayService.addRoute(resource, host, port)
+  def addRoute(resource: String, host: String, port: Int): Unit = {
+    resourceToRoute = resourceToRoute.updated(resource, new ProxyRoute(host, port))
+    updatedRoutes()
   }
+
+  def currentRoute(): Route = routeHolder.get()
+
 }
 
-object RouteManager {
-  case class AddServiceRoute(name: String, host: String, resource: String, port: Option[Int] = None)
+trait ApiGatewayRoute extends Config {
+  self: RouteRepository =>
+
+  val gatewayRoute = (ctx: RequestContext) => currentRoute()(ctx)
 }
 
-class ProxyRoute(host: String, port: Int)(implicit val system: ActorSystem, ec: ExecutionContext, materializer: Materializer ) extends Config with Logging {
+class ProxyRoute(val host: String, val port: Int)(
+  implicit val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
+) extends Config with Logging {
   val connector = Http(system).outgoingConnection(host, port)
 
   val route = Route { context =>
@@ -81,4 +91,5 @@ class ProxyRoute(host: String, port: Int)(implicit val system: ActorSystem, ec: 
     def -[T](header: ModeledCompanion[T]): List[HttpHeader] =
       headers.filterNot(_.is(header.lowercaseName))
   }
+
 }
