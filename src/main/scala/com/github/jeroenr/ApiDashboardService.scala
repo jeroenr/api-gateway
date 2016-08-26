@@ -43,14 +43,24 @@ trait ApiDashboardService extends Directives with Protocols {
               }
             }
           }
+      } ~
+      path(Segment) { resource =>
+        rejectEmptyResponse {
+          complete {
+            (routeManager ? GetServiceByResource(resource)).mapTo[Option[ServiceRoute]]
+          }
+        }
       }
     }
 }
+
 class RouteManager(routeRepository: RouteRepository) extends Actor with ActorLogging {
   import RouteManager._
   override def receive: Receive = {
     case ListServices =>
       sender() ! routeRepository.serviceRoutes()
+    case GetServiceByResource(resource) =>
+      sender() ! routeRepository.serviceRoute(resource)
     case AddServiceRoute(name, host, resource, maybePort) =>
       val port = maybePort.getOrElse(80)
       log.info(s"Adding route for resource $resource on host $host:$port")
@@ -60,6 +70,7 @@ class RouteManager(routeRepository: RouteRepository) extends Actor with ActorLog
 
 object RouteManager {
   case object ListServices
+  case class GetServiceByResource(resource: String)
   case class AddServiceRoute(name: String, host: String, resource: String, port: Option[Int] = None)
 }
 

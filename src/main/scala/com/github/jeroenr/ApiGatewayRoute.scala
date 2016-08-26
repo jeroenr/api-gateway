@@ -21,6 +21,7 @@ trait RouteRepository extends Directives {
 
   private val routeHolder = new AtomicReference[Route](reject)
 
+  // TODO: persistence
   private var resourceToRoute = Map.empty[String, ProxyRoute]
 
   private def createRoute(resource: String, proxyRoute: ProxyRoute) =
@@ -30,6 +31,9 @@ trait RouteRepository extends Directives {
     routeHolder.set(resourceToRoute.foldLeft[Route](reject) {
       case (accumulated, (resource, proxyRoute)) => createRoute(resource, proxyRoute) ~ accumulated
     })
+
+  def serviceRoute(resource: String): Option[ServiceRoute] =
+    resourceToRoute.get(resource).map(pr => ServiceRoute(resource, pr.host, pr.port))
 
   def serviceRoutes(): List[ServiceRoute] =
     resourceToRoute.map {
