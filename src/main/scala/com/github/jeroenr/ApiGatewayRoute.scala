@@ -6,9 +6,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{Directives, RequestContext, Route}
+import akka.http.scaladsl.server.{ Directives, RequestContext, Route }
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 
 import scala.concurrent.ExecutionContext
 
@@ -27,7 +27,7 @@ trait RouteRepository extends Directives {
   private def createRoute(resource: String, proxyRoute: ProxyRoute) =
     pathPrefix(resource)(proxyRoute.route.apply)
 
-  private def updatedRoutes(): Unit =
+  private def updateRoutes(): Unit =
     routeHolder.set(resourceToRoute.foldLeft[Route](reject) {
       case (accumulated, (resource, proxyRoute)) => createRoute(resource, proxyRoute) ~ accumulated
     })
@@ -42,7 +42,7 @@ trait RouteRepository extends Directives {
 
   def addRoute(resource: String, host: String, port: Int): Unit = {
     resourceToRoute = resourceToRoute.updated(resource, new ProxyRoute(host, port))
-    updatedRoutes()
+    updateRoutes()
   }
 
   def currentRoute(): Route = routeHolder.get()
@@ -56,7 +56,8 @@ trait ApiGatewayRoute extends Config {
 }
 
 class ProxyRoute(val host: String, val port: Int)(
-  implicit val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
+    implicit
+    val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
 ) extends Config with Logging {
   val connector = Http(system).outgoingConnection(host, port)
 

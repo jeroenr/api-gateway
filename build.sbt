@@ -29,11 +29,21 @@ libraryDependencies ++= {
 lazy val root = project.in(file("."))
 
 Revolver.settings
-enablePlugins(JavaAppPackaging)
+enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
 
-initialCommands := """|import scalaz._
-                      |import Scalaz._
-                      |import akka.actor._
+dockerfile in docker := {
+  val appDir: File = stage.value
+  val targetDir = "/opt"
+
+  new Dockerfile {
+    from("java")
+    entryPoint(s"$targetDir/bin/${executableScriptName.value}")
+    expose(4444, 4445)
+    copy(appDir, targetDir)
+  }
+}
+
+initialCommands := """|import akka.actor._
                       |import akka.pattern._
                       |import akka.util._
                       |import scala.concurrent._

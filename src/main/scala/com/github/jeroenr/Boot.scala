@@ -1,6 +1,6 @@
 package com.github.jeroenr
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 
@@ -18,6 +18,5 @@ object Boot extends App with Config with Logging with ApiGatewayRoute with Route
   Http().bindAndHandle(dashboardRoute, httpConfig.interface, httpConfig.port + 1).transform(
     binding => log.info(s"REST interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
   )
-
 
 }

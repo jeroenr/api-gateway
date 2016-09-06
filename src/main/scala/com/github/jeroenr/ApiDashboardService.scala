@@ -1,6 +1,6 @@
 package com.github.jeroenr
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{ Actor, ActorLogging, Props }
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
@@ -31,26 +31,26 @@ trait ApiDashboardService extends Directives with Protocols {
             (routeManager ? ListServices)
               .mapTo[Iterable[ServiceRoute]]
               .map(services =>
-                Map("services" -> services)
-              )
+                Map("services" -> services))
           }
         } ~
           post {
-            entity(as[RegisterServiceRoute]) { case RegisterServiceRoute(name, host, resource, maybePort) =>
-              complete {
-                routeManager ! AddServiceRoute(name, host, resource, maybePort)
-                StatusCodes.Accepted
-              }
+            entity(as[RegisterServiceRoute]) {
+              case RegisterServiceRoute(name, host, resource, maybePort) =>
+                complete {
+                  routeManager ! AddServiceRoute(name, host, resource, maybePort)
+                  StatusCodes.Accepted
+                }
             }
           }
       } ~
-      path(Segment) { resource =>
-        rejectEmptyResponse {
-          complete {
-            (routeManager ? GetServiceByResource(resource)).mapTo[Option[ServiceRoute]]
+        path(Segment) { resource =>
+          rejectEmptyResponse {
+            complete {
+              (routeManager ? GetServiceByResource(resource)).mapTo[Option[ServiceRoute]]
+            }
           }
         }
-      }
     }
 }
 
