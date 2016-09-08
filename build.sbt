@@ -1,7 +1,7 @@
 import ReleaseTransformations._
 
 name          := """api-gateway"""
-organization  := "com.github.jeroenr"
+organization  := "com.github.cupenya"
 scalaVersion  := "2.11.8"
 scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8")
 
@@ -61,7 +61,7 @@ publishTo := {
     Some("releases"  at nexus + "service/local/staging/deploy/maven2")
 }
 pomExtra :=
-  <url>https://github.com/jeroenr/api-gateway</url>
+  <url>https://github.com/cupenya/api-gateway</url>
   <licenses>
     <license>
       <name>Apache-2.0</name>
@@ -70,14 +70,14 @@ pomExtra :=
     </license>
   </licenses>
   <scm>
-    <url>https://github.com/jeroenr/api-gateway</url>
-    <connection>scm:git:git@github.com:jeroenr/api-gateway.git</connection>
+    <url>https://github.com/cupenya/api-gateway</url>
+    <connection>scm:git:git@github.com:cupenya/api-gateway.git</connection>
   </scm>
   <developers>
     <developer>
-      <id>jeroenr</id>
-      <name>Jeroen Rosenberg</name>
-      <url>https://github.com/jeroenr/</url>
+      <id>cupenya</id>
+    <name>Jeroen Rosenberg</name>
+      <url>https://github.com/cupenya/</url>
     </developer>
   </developers>
 
