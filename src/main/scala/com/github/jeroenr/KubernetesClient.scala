@@ -11,6 +11,8 @@ import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 
+import spray.json._
+
 import scala.concurrent.ExecutionContext
 
 trait KubernetesClient extends Logging {
@@ -27,7 +29,20 @@ trait KubernetesClient extends Logging {
       .single(req)
       .via(client)
       .runWith(Sink.head).map { res =>
-      res.entity.dataBytes.map(x => log.info(s"Service update: ${x.utf8String}")).runWith(Sink.ignore)
+      res.entity.dataBytes
+        .map(_.utf8String)
+        .mapConcat(_.split('\n').toList)
+        .map(_.parseJson)
+        .map(serviceUpdateJson => {
+          log.info(s"Service update: $serviceUpdateJson")
+          serviceUpdateJson
+        })
+        .collect {
+          case obj: JsObject => obj.fields("object").asJsObject.fields("metadata").asJsObject.fields.get("labels").flatMap(_.asJsObject.fields.get("resource"))
+        }.collect {
+          case Some(resourceName: JsString) => resourceName
+        }.map(resource => log.info(s"Resource modified $resource"))
+        .runWith(Sink.ignore)
     }
   }
 
