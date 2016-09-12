@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
@@ -29,21 +29,21 @@ trait KubernetesClient extends Logging {
       .single(req)
       .via(client)
       .runWith(Sink.head).map { res =>
-      res.entity.dataBytes
-        .map(_.utf8String)
-        .mapConcat(_.split('\n').toList)
-        .map(_.parseJson)
-        .map(serviceUpdateJson => {
-          log.info(s"Service update: $serviceUpdateJson")
-          serviceUpdateJson
-        })
-        .collect {
-          case obj: JsObject => obj.fields("object").asJsObject.fields("metadata").asJsObject.fields.get("labels").flatMap(_.asJsObject.fields.get("resource"))
-        }.collect {
-          case Some(resourceName: JsString) => resourceName
-        }.map(resource => log.info(s"Resource modified $resource"))
-        .runWith(Sink.ignore)
-    }
+        res.entity.dataBytes
+          .map(_.utf8String)
+          .mapConcat(_.split('\n').toList)
+          .map(_.parseJson)
+          .map(serviceUpdateJson => {
+            log.info(s"Service update: $serviceUpdateJson")
+            serviceUpdateJson
+          })
+          .collect {
+            case obj: JsObject => obj.fields("object").asJsObject.fields("metadata").asJsObject.fields.get("labels").flatMap(_.asJsObject.fields.get("resource"))
+          }.collect {
+            case Some(resourceName: JsString) => resourceName
+          }.map(resource => log.info(s"Resource modified $resource"))
+          .runWith(Sink.ignore)
+      }
   }
 
 }
