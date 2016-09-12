@@ -12,14 +12,14 @@ object Boot extends App with Config with Logging with GatewayHttpService with Ga
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  log.info(s"Starting API gateway using config $httpConfig")
+  log.info(s"Starting API gateway using interface $interface and port $httpPort")
 
-  Http().bindAndHandle(dashboardRoute, httpConfig.interface, httpConfig.port + 1).transform(
-    binding => log.info(s"REST interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
+  Http().bindAndHandle(gatewayRoute, interface, httpPort).transform(
+    binding => log.info(s"REST interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
   )
 
-  Http().bindAndHandle(gatewayRoute, httpConfig.interface, httpConfig.port).transform(
-    binding => log.info(s"REST interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
+  Http().bindAndHandle(dashboardRoute, interface, httpPort + 1).transform(
+    binding => log.info(s"REST interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
   log.info(s"Starting watching services")

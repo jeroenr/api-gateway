@@ -1,15 +1,10 @@
 package com.github.cupenya.gateway
 
 import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.Ficus
-import net.ceedubs.ficus.readers.ArbitraryTypeReader
 
 trait Config {
-  import ArbitraryTypeReader._
-  import Ficus._
-
-  protected case class HttpConfig(interface: String, port: Int)
-
   private val config = ConfigFactory.load()
-  protected val httpConfig = config.as[HttpConfig]("http")
+  private val httpConfig = config.getConfig("http")
+  val interface = httpConfig.getString("interface")
+  val httpPort = httpConfig.getInt("port")
 }

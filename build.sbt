@@ -1,4 +1,5 @@
 import ReleaseTransformations._
+import com.typesafe.sbt.packager.docker.Cmd
 
 name          := """api-gateway"""
 organization  := "com.github.cupenya"
@@ -18,7 +19,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-experimental"            % akkaV,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaV,
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
-    "com.iheart"        %% "ficus"                             % ficusV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
     "ch.qos.logback"    % "logback-classic"                    % logbackV,
     "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test,
@@ -26,22 +26,24 @@ libraryDependencies ++= {
   )
 }
 
-lazy val root = project.in(file("."))
+val branch = "git rev-parse --abbrev-ref HEAD" !!
+val cleanBranch = branch.toLowerCase.replaceAll(".*(cpy-[0-9]+).*", "$1").replaceAll("\\n", "").replaceAll("\\r", "")
+
+lazy val dockerImageFromJava = Seq(
+  packageName in Docker := "cpy-docker-test/" + name.value,
+  version in Docker     := "latest",
+  dockerBaseImage       := "airdock/oracle-jdk:jdk-1.8",
+  dockerRepository      := Some("eu.gcr.io"),
+  defaultLinuxInstallLocation in Docker := s"/opt/${name.value}", // to have consistent directory for files
+  dockerCommands ++= Seq(
+    Cmd("LABEL", "com.example.key: value")
+  )
+)
+
+lazy val root = project.in(file(".")).settings(dockerImageFromJava)
 
 Revolver.settings
-enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
-
-dockerfile in docker := {
-  val appDir: File = stage.value
-  val targetDir = "/opt"
-
-  new Dockerfile {
-    from("java")
-    entryPoint(s"$targetDir/bin/${executableScriptName.value}")
-    expose(4444, 4445)
-    copy(appDir, targetDir)
-  }
-}
+enablePlugins(DockerPlugin, JavaAppPackaging)
 
 initialCommands := """|import akka.actor._
                       |import akka.pattern._
@@ -53,12 +55,10 @@ publishMavenStyle := true
 publishArtifact in Test := false
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 pomIncludeRepository := { _ => false }
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+  val nexus = "https://test.cupenya.com/nexus/content/repositories"
+  Some("snapshots" at nexus + "/snapshots")
 }
 pomExtra :=
   <url>https://github.com/cupenya/api-gateway</url>
