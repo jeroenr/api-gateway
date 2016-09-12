@@ -11,10 +11,11 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import com.github.cupenya.gateway.{Config, Logging}
 import spray.json._
+import scala.language.postfixOps
 
 import scala.concurrent.ExecutionContext
 
-trait KubernetesClient extends ServiceDiscoverySource with Logging {
+trait KubernetesServiceDiscoveryClient extends ServiceDiscoverySource with Logging {
   implicit val system: ActorSystem
   implicit val ec: ExecutionContext
   implicit val materializer: Materializer
@@ -25,7 +26,11 @@ trait KubernetesClient extends ServiceDiscoverySource with Logging {
     settings = ClientConnectionSettings(system)
   )
 
-  val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true")))).withHeaders(Connection("Keep-Alive"))
+  private val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true"))))
+    .withHeaders(Connection("Keep-Alive"))
+
+  private def parseKubernetesMetaDataField(stringValue: JsString) =
+    stringValue.toString().filterNot('"' ==)
 
   def watchServices(): Unit = {
     Source
@@ -43,15 +48,15 @@ trait KubernetesClient extends ServiceDiscoverySource with Logging {
           .collect {
             case obj: JsObject =>
               obj.fields("object")
-                .asJsObject.fields("metadata")
-                .asJsObject.fields
+                .toMap("metadata")
+                .toMap
           }.filter(_.contains("labels"))
           .map { metadata =>
-            (metadata("name"), metadata.get("labels").flatMap(_.asJsObject.fields.get("resource")))
+            (metadata("name"), metadata.get("labels").flatMap(_.toMap.get("resource")))
           }
           .collect {
             case (name: JsString, Some(resourceName: JsString)) =>
-              KubernetesService(name.toString.filterNot('"' ==), resourceName.toString.filterNot('"' ==))
+              KubernetesService(parseKubernetesMetaDataField(name), parseKubernetesMetaDataField(resourceName))
           }
           .runForeach(kubernetesService => {
               log.info(s"Kubernetes service modified $kubernetesService")
@@ -61,6 +66,9 @@ trait KubernetesClient extends ServiceDiscoverySource with Logging {
       }
   }
 
+  implicit class RichJsValue(jsValue: JsValue) {
+    def toMap = jsValue.asJsObject.fields
+  }
 }
 
 sealed trait KubernetesNamespace {
@@ -77,4 +85,6 @@ trait DiscoverableThroughDns extends DiscoverableAddress {
   def address: String = s"$name.$ns"
 }
 
-case class KubernetesService(name: String, resource: String, port: Int = 8080) extends ServiceUpdate with DiscoverableThroughDns with DefaultKubernetesNamespace
+case class KubernetesService(name: String, resource: String, port: Int = 8080) extends ServiceUpdate
+  with DiscoverableThroughDns
+  with DefaultKubernetesNamespace

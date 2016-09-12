@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
 
 trait GatewayTargetDirectives extends Directives {
   def serviceRouteForResource(config: GatewayConfiguration): Directive[Tuple1[GatewayTargetClient]] =
-    pathPrefix(GatewayTargetPathMatcher(config)).flatMap(gatewayTarget => provide(gatewayTarget))
+    pathPrefix(GatewayTargetPathMatcher(config)).flatMap(provide)
 }
 
 case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMatcher1[GatewayTargetClient] {

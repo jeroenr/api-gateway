@@ -4,10 +4,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
-import com.github.cupenya.gateway.integration.KubernetesClient
+import com.github.cupenya.gateway.integration.KubernetesServiceDiscoveryClient
 import com.github.cupenya.gateway.server.{ApiDashboardService, GatewayHttpService}
 
-object Boot extends App with Logging with GatewayHttpService with ApiDashboardService with KubernetesClient {
+object Boot extends App with Logging with GatewayHttpService with ApiDashboardService with KubernetesServiceDiscoveryClient {
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
