@@ -14,7 +14,7 @@ import spray.json._
 
 import scala.concurrent.ExecutionContext
 
-trait KubernetesClient extends Logging {
+trait KubernetesClient extends ServiceDiscoverySource with Logging {
   implicit val system: ActorSystem
   implicit val ec: ExecutionContext
   implicit val materializer: Materializer
@@ -44,13 +44,37 @@ trait KubernetesClient extends Logging {
             case obj: JsObject =>
               obj.fields("object")
                 .asJsObject.fields("metadata")
-                .asJsObject.fields.get("labels")
-                .flatMap(_.asJsObject.fields.get("resource"))
-          }.collect {
-            case Some(resourceName: JsString) => resourceName
-          }.map(resource => log.info(s"Resource modified $resource"))
-          .runWith(Sink.ignore)
+                .asJsObject.fields
+          }.filter(_.contains("labels"))
+          .map { metadata =>
+            (metadata("name"), metadata.get("labels").flatMap(_.asJsObject.fields.get("resource")))
+          }
+          .collect {
+            case (name: JsString, Some(resourceName: JsString)) =>
+              KubernetesService(name.toString.filterNot('"' ==), resourceName.toString.filterNot('"' ==))
+          }
+          .runForeach(kubernetesService => {
+              log.info(s"Kubernetes service modified $kubernetesService")
+              registerService(kubernetesService)
+            }
+          )
       }
   }
 
 }
+
+sealed trait KubernetesNamespace {
+  val ns: String
+}
+
+trait DefaultKubernetesNamespace extends KubernetesNamespace {
+  override val ns: String = "default"
+}
+
+trait DiscoverableThroughDns extends DiscoverableAddress {
+  self: KubernetesNamespace =>
+  val name: String
+  def address: String = s"$name.$ns"
+}
+
+case class KubernetesService(name: String, resource: String, port: Int = 8080) extends ServiceUpdate with DiscoverableThroughDns with DefaultKubernetesNamespace

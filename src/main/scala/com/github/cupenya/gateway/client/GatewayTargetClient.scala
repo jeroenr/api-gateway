@@ -11,7 +11,7 @@ import com.github.cupenya.gateway.{Config, Logging}
 
 import scala.concurrent.ExecutionContext
 
-class GatewayTarget(val host: String, val port: Int)(
+class GatewayTargetClient(val host: String, val port: Int)(
     implicit
     val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
 ) extends Logging {

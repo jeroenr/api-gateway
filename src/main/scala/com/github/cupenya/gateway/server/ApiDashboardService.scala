@@ -6,8 +6,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.github.cupenya.gateway.client.GatewayTarget
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
+import com.github.cupenya.gateway.model.GatewayTarget
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
@@ -19,8 +19,6 @@ trait Protocols extends DefaultJsonProtocol with SprayJsonSupport {
 }
 
 trait ApiDashboardService extends Directives with Protocols {
-  self: GatewayConfigurationManager =>
-
   import scala.concurrent.duration._
   import scala.language.postfixOps
 
@@ -37,7 +35,7 @@ trait ApiDashboardService extends Directives with Protocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            ServiceRoutes(currentConfig().targets.map {
+            ServiceRoutes(GatewayConfigurationManager.currentConfig().targets.map {
               case (key, target) => ServiceRoute(key, target.host, target.port)
             }.toList)
           }
@@ -46,7 +44,7 @@ trait ApiDashboardService extends Directives with Protocols {
             entity(as[RegisterServiceRoute]) {
               case RegisterServiceRoute(name, host, resource, maybePort) =>
                 complete {
-                  addGatewayTarget(resource, new GatewayTarget(host, maybePort.getOrElse(80)))
+                  GatewayConfigurationManager.upsertGatewayTarget(GatewayTarget(resource, host, maybePort.getOrElse(80)))
                   StatusCodes.NoContent -> None
                 }
             }

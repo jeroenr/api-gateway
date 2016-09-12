@@ -7,7 +7,7 @@ import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.integration.KubernetesClient
 import com.github.cupenya.gateway.server.{ApiDashboardService, GatewayHttpService}
 
-object Boot extends App with Logging with GatewayHttpService with GatewayConfigurationManager with ApiDashboardService with KubernetesClient {
+object Boot extends App with Logging with GatewayHttpService with ApiDashboardService with KubernetesClient {
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
