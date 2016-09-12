@@ -1,13 +1,15 @@
 package com.github.cupenya.gateway
 
-import akka.actor.ActorSystem
+import akka.actor.{Props, ActorSystem}
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
+import akka.stream.{Materializer, ActorMaterializer}
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
-import com.github.cupenya.gateway.integration.KubernetesServiceDiscoveryClient
+import com.github.cupenya.gateway.integration.{KubernetesServiceUpdate, ServiceDiscoveryAgent, KubernetesServiceDiscoveryClient}
 import com.github.cupenya.gateway.server.{ApiDashboardService, GatewayHttpService}
 
-object Boot extends App with Logging with GatewayHttpService with ApiDashboardService with KubernetesServiceDiscoveryClient {
+import scala.concurrent.ExecutionContext
+
+object Boot extends App with Logging with GatewayHttpService with ApiDashboardService {
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
@@ -30,7 +32,7 @@ object Boot extends App with Logging with GatewayHttpService with ApiDashboardSe
     binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
-  log.info(s"Starting watching services")
-  watchServices()
+  val serviceDiscoveryAgent = system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
 
+  serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 }

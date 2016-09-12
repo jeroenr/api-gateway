@@ -15,10 +15,8 @@ import scala.language.postfixOps
 
 import scala.concurrent.ExecutionContext
 
-trait KubernetesServiceDiscoveryClient extends ServiceDiscoverySource with Logging {
-  implicit val system: ActorSystem
-  implicit val ec: ExecutionContext
-  implicit val materializer: Materializer
+class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
+  extends ServiceDiscoverySource[KubernetesServiceUpdate] with Logging {
 
   lazy val client = Http(system).outgoingConnection(
     Config.integration.kubernetes.host,
@@ -32,39 +30,36 @@ trait KubernetesServiceDiscoveryClient extends ServiceDiscoverySource with Loggi
   private def parseKubernetesMetaDataField(stringValue: JsString) =
     stringValue.toString().filterNot('"' ==)
 
-  def watchServices(): Unit = {
-    Source
-      .single(req)
-      .via(client)
-      .runWith(Sink.head).map { res =>
-        res.entity.dataBytes
-          .map(_.utf8String)
-          .mapConcat(_.split('\n').toList)
-          .map(_.parseJson)
-          .map(serviceUpdateJson => {
-            log.info(s"Service update: $serviceUpdateJson")
-            serviceUpdateJson
-          })
-          .collect {
-            case obj: JsObject =>
-              obj.fields("object")
-                .toMap("metadata")
-                .toMap
-          }.filter(_.contains("labels"))
-          .map { metadata =>
-            (metadata("name"), metadata.get("labels").flatMap(_.toMap.get("resource")))
-          }
-          .collect {
-            case (name: JsString, Some(resourceName: JsString)) =>
-              KubernetesService(parseKubernetesMetaDataField(name), parseKubernetesMetaDataField(resourceName))
-          }
-          .runForeach(kubernetesService => {
-              log.info(s"Kubernetes service modified $kubernetesService")
-              registerService(kubernetesService)
-            }
-          )
-      }
-  }
+  def source = Source
+    .single(req)
+    .via(client)
+    .runWith(Sink.head).map { res =>
+      res.entity.dataBytes
+        .map(_.utf8String)
+        .mapConcat(_.split('\n').toList)
+        .map(_.parseJson)
+        .map(serviceUpdateJson => {
+          log.info(s"Service update: $serviceUpdateJson")
+          serviceUpdateJson
+        })
+        .collect {
+          case obj: JsObject =>
+            obj.fields("object")
+              .toMap("metadata")
+              .toMap
+        }.filter(_.contains("labels"))
+        .map { metadata =>
+          (metadata("name"), metadata.get("labels").flatMap(_.toMap.get("resource")))
+        }
+        .collect {
+          case (name: JsString, Some(resourceName: JsString)) =>
+            KubernetesServiceUpdate(
+              UpdateType.Mutation,
+              parseKubernetesMetaDataField(name),
+              parseKubernetesMetaDataField(resourceName)
+            )
+        }
+    }
 
   implicit class RichJsValue(jsValue: JsValue) {
     def toMap = jsValue.asJsObject.fields
@@ -85,6 +80,6 @@ trait DiscoverableThroughDns extends DiscoverableAddress {
   def address: String = s"$name.$ns"
 }
 
-case class KubernetesService(name: String, resource: String, port: Int = 8080) extends ServiceUpdate
+case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, port: Int = 8080) extends ServiceUpdate
   with DiscoverableThroughDns
   with DefaultKubernetesNamespace

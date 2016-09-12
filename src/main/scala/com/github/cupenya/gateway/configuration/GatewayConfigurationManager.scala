@@ -21,6 +21,11 @@ object GatewayConfigurationManager {
     configHolder.lazySet(current.copy(current.targets.updated(target.resource, new GatewayTargetClient(target.address, target.port))))
   }
 
+  def deleteGatewayTarget(resource: String) = {
+    val current = configHolder.get()
+    configHolder.lazySet(current.copy(current.targets - resource))
+  }
+
   def setConfig(config: GatewayConfiguration): Unit =
     configHolder.lazySet(config)
 }
