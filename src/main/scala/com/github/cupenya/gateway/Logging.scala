@@ -1,6 +1,6 @@
-package com.github.jeroenr
+package com.github.cupenya.gateway
 
-import org.slf4s.{ Logging => SLF4SLogging }
+import org.slf4s.{Logging => SLF4SLogging}
 
 trait Logging extends SLF4SLogging {
   @inline

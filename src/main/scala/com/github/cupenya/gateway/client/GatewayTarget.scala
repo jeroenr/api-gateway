@@ -1,61 +1,17 @@
-package com.github.jeroenr
-
-import java.util.concurrent.atomic.AtomicReference
+package com.github.cupenya.gateway.client
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{ Directives, RequestContext, Route }
+import akka.http.scaladsl.server.{RequestContext, Route}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.{Sink, Source}
+import com.github.cupenya.gateway.{Config, Logging}
 
 import scala.concurrent.ExecutionContext
 
-trait RouteRepository extends Directives {
-  implicit val system: ActorSystem
-
-  implicit def ec: ExecutionContext
-
-  implicit def materializer: Materializer
-
-  private val routeHolder = new AtomicReference[Route](reject)
-
-  // TODO: persistence
-  private var resourceToRoute = Map.empty[String, ProxyRoute]
-
-  private def createRoute(resource: String, proxyRoute: ProxyRoute) =
-    pathPrefix(resource)(proxyRoute.route.apply)
-
-  private def updateRoutes(): Unit =
-    routeHolder.set(resourceToRoute.foldLeft[Route](reject) {
-      case (accumulated, (resource, proxyRoute)) => createRoute(resource, proxyRoute) ~ accumulated
-    })
-
-  def serviceRoute(resource: String): Option[ServiceRoute] =
-    resourceToRoute.get(resource).map(pr => ServiceRoute(resource, pr.host, pr.port))
-
-  def serviceRoutes(): List[ServiceRoute] =
-    resourceToRoute.map {
-      case (resource, proxyRoute) => ServiceRoute(resource, proxyRoute.host, proxyRoute.port)
-    }.toList
-
-  def addRoute(resource: String, host: String, port: Int): Unit = {
-    resourceToRoute = resourceToRoute.updated(resource, new ProxyRoute(host, port))
-    updateRoutes()
-  }
-
-  def currentRoute(): Route = routeHolder.get()
-
-}
-
-trait ApiGatewayRoute extends Config {
-  self: RouteRepository =>
-
-  val gatewayRoute = (ctx: RequestContext) => currentRoute()(ctx)
-}
-
-class ProxyRoute(val host: String, val port: Int)(
+class GatewayTarget(val host: String, val port: Int)(
     implicit
     val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
 ) extends Config with Logging {
