@@ -2,9 +2,28 @@ package com.github.cupenya.gateway
 
 import com.typesafe.config.ConfigFactory
 
-trait Config {
-  private val config = ConfigFactory.load()
-  private val httpConfig = config.getConfig("http")
-  val interface = httpConfig.getString("interface")
-  val httpPort = httpConfig.getInt("port")
+object Config {
+  private val rootConfig = ConfigFactory.load()
+
+  object gateway {
+    private val config = rootConfig.getConfig("gateway")
+    val interface = config.getString("interface")
+    val port = config.getInt("port")
+  }
+
+  object dashboard {
+    private val config = rootConfig.getConfig("dashboard")
+    val interface = config.getString("interface")
+    val port = config.getInt("port")
+  }
+
+  object integration {
+    private val config = rootConfig.getConfig("integration")
+
+    object kubernetes {
+      private val k8sConfig = config.getConfig("kubernetes")
+      val host = k8sConfig.getString("host")
+      val port = k8sConfig.getInt("port")
+    }
+  }
 }

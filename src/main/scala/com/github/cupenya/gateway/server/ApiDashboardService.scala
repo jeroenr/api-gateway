@@ -22,6 +22,7 @@ trait ApiDashboardService extends Directives with Protocols {
   self: GatewayConfigurationManager =>
 
   import scala.concurrent.duration._
+  import scala.language.postfixOps
 
   implicit val system: ActorSystem
 

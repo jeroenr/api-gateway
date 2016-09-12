@@ -6,7 +6,7 @@ import akka.http.scaladsl.server._
 import akka.stream.Materializer
 import com.github.cupenya.gateway.client.GatewayTarget
 import com.github.cupenya.gateway.configuration.{GatewayConfiguration, GatewayConfigurationManager}
-import com.github.cupenya.gateway.{Config, Logging}
+import com.github.cupenya.gateway.Logging
 
 import scala.concurrent.ExecutionContext
 
@@ -33,7 +33,7 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMa
   }
 }
 
-trait GatewayHttpService extends GatewayTargetDirectives with Logging with Directives with Config {
+trait GatewayHttpService extends GatewayTargetDirectives with Logging with Directives {
   self: GatewayConfigurationManager =>
 
   implicit val system: ActorSystem

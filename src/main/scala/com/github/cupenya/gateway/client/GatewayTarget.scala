@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 class GatewayTarget(val host: String, val port: Int)(
     implicit
     val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
-) extends Config with Logging {
+) extends Logging {
   val connector = Http(system).outgoingConnection(host, port)
 
   val route = Route { context =>

@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.github.cupenya.gateway.Logging
+import com.github.cupenya.gateway.{Config, Logging}
 import spray.json._
 
 import scala.concurrent.ExecutionContext
@@ -19,7 +19,11 @@ trait KubernetesClient extends Logging {
   implicit val ec: ExecutionContext
   implicit val materializer: Materializer
 
-  lazy val client = Http(system).outgoingConnection("localhost", 8080, settings = ClientConnectionSettings(system))
+  lazy val client = Http(system).outgoingConnection(
+    Config.integration.kubernetes.host,
+    Config.integration.kubernetes.port,
+    settings = ClientConnectionSettings(system)
+  )
 
   val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true")))).withHeaders(Connection("Keep-Alive"))
 
@@ -37,7 +41,11 @@ trait KubernetesClient extends Logging {
             serviceUpdateJson
           })
           .collect {
-            case obj: JsObject => obj.fields("object").asJsObject.fields("metadata").asJsObject.fields.get("labels").flatMap(_.asJsObject.fields.get("resource"))
+            case obj: JsObject =>
+              obj.fields("object")
+                .asJsObject.fields("metadata")
+                .asJsObject.fields.get("labels")
+                .flatMap(_.asJsObject.fields.get("resource"))
           }.collect {
             case Some(resourceName: JsString) => resourceName
           }.map(resource => log.info(s"Resource modified $resource"))
