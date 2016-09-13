@@ -16,7 +16,7 @@ import scala.language.postfixOps
 import scala.concurrent.ExecutionContext
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
-  extends ServiceDiscoverySource[KubernetesServiceUpdate] with Logging {
+  extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
 
   lazy val client = Http(system).outgoingConnection(
     Config.integration.kubernetes.host,
@@ -26,9 +26,6 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
 
   private val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true"))))
     .withHeaders(Connection("Keep-Alive"))
-
-  private def parseKubernetesMetaDataField(stringValue: JsString) =
-    stringValue.toString().filterNot('"' ==)
 
   def source = Source
     .single(req)
@@ -43,27 +40,67 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
           serviceUpdateJson
         })
         .collect {
-          case obj: JsObject =>
-            obj.fields("object")
-              .toMap("metadata")
-              .toMap
-        }.filter(_.contains("labels"))
-        .map { metadata =>
-          (metadata("name"), metadata.get("labels").flatMap(_.toMap.get("resource")))
+          case obj: JsObject => toKubernetesServiceUpdate(obj)
         }
         .collect {
-          case (name: JsString, Some(resourceName: JsString)) =>
-            KubernetesServiceUpdate(
-              UpdateType.Mutation,
-              parseKubernetesMetaDataField(name),
-              parseKubernetesMetaDataField(resourceName)
-            )
+          case Some(kubernetesServiceUpdate) =>
+            log.info(s"Got Kubernetes service update $kubernetesServiceUpdate")
+            kubernetesServiceUpdate
         }
     }
+}
 
-  implicit class RichJsValue(jsValue: JsValue) {
-    def toMap = jsValue.asJsObject.fields
+trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
+
+  case class PortMapping(protocol: String, port: Int, targetPort: Int, nodePort: Option[Int])
+
+  case class Spec(ports: List[PortMapping])
+
+  case class Metadata(uid: String, name: String, namespace: String, labels: Option[Map[String, String]])
+
+  case class ServiceObject(spec: Spec, metadata: Metadata)
+
+  case class ServiceMutation(`type`: UpdateType, `object`: ServiceObject)
+
+  implicit val portMappingFormat = jsonFormat4(PortMapping)
+  implicit val specFormat = jsonFormat1(Spec)
+  implicit val metadataFormat = jsonFormat4(Metadata)
+  implicit val serviceObjectFormat = jsonFormat2(ServiceObject)
+
+  implicit object UpdateTypeFormat extends RootJsonFormat[UpdateType] {
+    override def read(json: JsValue): UpdateType = json match {
+      case JsString("ADDED") => UpdateType.Addition
+      case JsString("DELETED") => UpdateType.Deletion
+      case JsString("MODIFIED") => UpdateType.Mutation
+      case _ => throw new DeserializationException(s"Couldn't deserialize $json. Was expecting one of [ADDED, DELETED, MODIFIED]")
+    }
+
+    override def write(updateType: UpdateType): JsValue = updateType match {
+      case UpdateType.Addition => JsString("ADDED")
+      case UpdateType.Deletion => JsString("DELETED")
+      case UpdateType.Mutation => JsString("MODIFIED")
+    }
   }
+
+  implicit val serviceMutationFormat = jsonFormat2(ServiceMutation)
+
+  def toKubernetesServiceUpdate(jsObject: JsObject): Option[KubernetesServiceUpdate] = {
+    log.info(s"Parsing service mutation")
+    val serviceMutation = jsObject.convertTo[ServiceMutation]
+    log.info(s"Parser service mutation $serviceMutation")
+    val serviceObject = serviceMutation.`object`
+    val metadata: Metadata = serviceObject.metadata
+    metadata.labels.flatMap(_.get("resource")).map { resource =>
+      KubernetesServiceUpdate(
+        serviceMutation.`type`,
+        cleanMetadataString(metadata.name),
+        cleanMetadataString(resource),
+        serviceObject.spec.ports.headOption.map(_.port).getOrElse(8080) )
+    }
+  }
+
+  private def cleanMetadataString(value: String) =
+    value.filterNot('"' ==)
 }
 
 sealed trait KubernetesNamespace {

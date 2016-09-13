@@ -33,8 +33,8 @@ object Boot extends App with Logging with GatewayHttpService with ApiDashboardSe
   )
 
   val serviceDiscoveryAgent =
-    system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
-//    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
+//    system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
+    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
 
   serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 }

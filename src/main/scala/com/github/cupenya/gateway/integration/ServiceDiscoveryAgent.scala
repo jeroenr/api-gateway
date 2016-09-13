@@ -7,6 +7,7 @@ import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.model.GatewayTarget
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 /**
  * Created by jero on 12/09/16.
@@ -20,7 +21,10 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   def watchServices() = serviceDiscoverySource.source.map(_.runForeach(serviceUpdate => {
     log.info(s"Service modified $serviceUpdate")
     registerService(serviceUpdate)
-  }))
+  }).onComplete {
+    case Success(done) => log.warn(s"Service discovery stream ended $done")
+    case Failure(t) => log.error(s"Service discovery stream failed", t)
+  })
 
   override def receive: Receive = {
     case WatchServices =>
