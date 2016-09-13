@@ -2,7 +2,6 @@ package com.github.cupenya.gateway.integration
 
 import akka.actor.{ActorSystem, Actor}
 import akka.stream.Materializer
-import com.github.cupenya.gateway.Boot._
 import com.github.cupenya.gateway.Logging
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.model.GatewayTarget
@@ -29,7 +28,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
       watchServices()
   }
 
-  private def registerService(serviceUpdate: ServiceUpdate): Unit = {
+  private def registerService(serviceUpdate: T): Unit = {
     serviceUpdate.updateType match {
       case UpdateType.Addition | UpdateType.Mutation =>
         val gatewayTarget = GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port)
