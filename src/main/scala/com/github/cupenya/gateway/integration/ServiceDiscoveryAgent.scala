@@ -9,9 +9,6 @@ import com.github.cupenya.gateway.model.GatewayTarget
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-/**
- * Created by jero on 12/09/16.
- */
 class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T])(implicit materializer: Materializer) extends Actor with Logging {
   import ServiceDiscoveryAgent._
 
@@ -22,8 +19,12 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
     log.info(s"Service modified $serviceUpdate")
     registerService(serviceUpdate)
   }).onComplete {
-    case Success(done) => log.warn(s"Service discovery stream ended $done")
-    case Failure(t) => log.error(s"Service discovery stream failed", t)
+    case Success(done) =>
+      log.warn(s"Service discovery stream ended $done")
+      self ! WatchServices
+    case Failure(t) =>
+      log.error(s"Service discovery stream failed", t)
+      self ! WatchServices
   })
 
   override def receive: Receive = {
