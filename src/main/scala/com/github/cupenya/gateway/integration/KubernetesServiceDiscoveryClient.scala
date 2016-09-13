@@ -85,9 +85,7 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
   implicit val serviceMutationFormat = jsonFormat2(ServiceMutation)
 
   def toKubernetesServiceUpdate(jsObject: JsObject): Option[KubernetesServiceUpdate] = {
-    log.info(s"Parsing service mutation")
     val serviceMutation = jsObject.convertTo[ServiceMutation]
-    log.info(s"Parser service mutation $serviceMutation")
     val serviceObject = serviceMutation.`object`
     val metadata: Metadata = serviceObject.metadata
     metadata.labels.flatMap(_.get("resource")).map { resource =>
