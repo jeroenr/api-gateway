@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
 import com.github.cupenya.gateway.client.GatewayTargetClient
-import com.github.cupenya.gateway.configuration.{GatewayConfiguration, GatewayConfigurationManager}
+import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
 import com.github.cupenya.gateway.Logging
 
 import scala.concurrent.ExecutionContext
@@ -24,7 +24,7 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMa
 
   private def matchPathToGatewayTarget(path: Path) = {
     path match {
-      case s@Segment(head, _) =>
+      case s @ Segment(head, _) =>
         config.targets.get(head)
           .map(gatewayTarget => Matched(s, Tuple1(gatewayTarget)))
           .getOrElse(Unmatched)

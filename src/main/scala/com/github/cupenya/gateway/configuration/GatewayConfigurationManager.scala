@@ -9,7 +9,6 @@ import com.github.cupenya.gateway.model.GatewayTarget
 
 import scala.concurrent.ExecutionContext
 
-
 object GatewayConfigurationManager {
   private val configHolder = new AtomicReference[GatewayConfiguration](GatewayConfiguration(Map.empty[String, GatewayTargetClient]))
 

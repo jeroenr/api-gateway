@@ -10,8 +10,7 @@ class StaticServiceListSource extends ServiceDiscoverySource[StaticServiceUpdate
   override def source: Future[Source[StaticServiceUpdate, _]] =
     Future.successful(Source.fromIterator(() => {
       List(StaticServiceUpdate(UpdateType.Addition, "health", "localhost", DEFAULT_PORT)).toIterator
-    })
-    )
+    }))
 
   override def name: String = "static service list"
 }

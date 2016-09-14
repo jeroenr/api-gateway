@@ -5,18 +5,18 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.{ HttpRequest, _ }
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
-import com.github.cupenya.gateway.{Config, Logging}
+import akka.stream.scaladsl.{ Sink, Source }
+import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json._
 
 import scala.language.postfixOps
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
-  extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
+    extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
 
   lazy val client = Http(system).outgoingConnection(
     Config.integration.kubernetes.host,
@@ -98,7 +98,8 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
         serviceMutation.`type`,
         cleanMetadataString(metadata.name),
         cleanMetadataString(resource),
-        serviceObject.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT) )
+        serviceObject.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT)
+      )
     }
   }
 
