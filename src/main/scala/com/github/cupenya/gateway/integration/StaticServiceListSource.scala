@@ -12,6 +12,8 @@ class StaticServiceListSource extends ServiceDiscoverySource[StaticServiceUpdate
       List(StaticServiceUpdate(UpdateType.Addition, "health", "localhost", DEFAULT_PORT)).toIterator
     })
     )
+
+  override def name: String = "static service list"
 }
 
 case class StaticServiceUpdate(updateType: UpdateType, resource: String, address: String, port: Int) extends ServiceUpdate

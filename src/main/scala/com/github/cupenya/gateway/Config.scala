@@ -1,5 +1,7 @@
 package com.github.cupenya.gateway
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.config.ConfigFactory
 
 object Config {
@@ -24,6 +26,11 @@ object Config {
       private val k8sConfig = config.getConfig("kubernetes")
       val host = k8sConfig.getString("host")
       val port = k8sConfig.getInt("port")
+    }
+
+    object reconnect {
+      private val reconnectConfig = config.getConfig("reconnect")
+      val delay = reconnectConfig.getDuration("delay", TimeUnit.SECONDS)
     }
   }
 }

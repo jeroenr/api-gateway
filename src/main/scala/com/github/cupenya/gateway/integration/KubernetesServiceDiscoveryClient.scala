@@ -48,6 +48,8 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
             kubernetesServiceUpdate
         }
     }
+
+  override def name: String = "Kubernetes API"
 }
 
 trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
