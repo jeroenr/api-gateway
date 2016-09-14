@@ -7,10 +7,10 @@ spec:
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: api-gateway-service
     spec:
       containers:
-      - name: api-gateway
+      - name: api-gateway-service
         image: eu.gcr.io/cpy-docker-test/api-gateway
         livenessProbe:
           httpGet:

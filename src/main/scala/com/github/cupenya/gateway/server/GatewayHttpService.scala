@@ -4,27 +4,27 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.GatewayTarget
-import com.github.cupenya.gateway.configuration.{GatewayConfiguration, GatewayConfigurationManager}
-import com.github.cupenya.gateway.{Config, Logging}
+import com.github.cupenya.gateway.client.GatewayTargetClient
+import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
+import com.github.cupenya.gateway.Logging
 
 import scala.concurrent.ExecutionContext
 
 trait GatewayTargetDirectives extends Directives {
-  def serviceRouteForResource(config: GatewayConfiguration): Directive[Tuple1[GatewayTarget]] =
-    pathPrefix(GatewayTargetPathMatcher(config)).flatMap(gatewayTarget => provide(gatewayTarget))
+  def serviceRouteForResource(config: GatewayConfiguration): Directive[Tuple1[GatewayTargetClient]] =
+    pathPrefix(GatewayTargetPathMatcher(config)).flatMap(provide)
 }
 
-case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMatcher1[GatewayTarget] {
+case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMatcher1[GatewayTargetClient] {
   import Path._
   import PathMatcher._
 
-  def apply(path: Path): Matching[Tuple1[GatewayTarget]] =
+  def apply(path: Path): Matching[Tuple1[GatewayTargetClient]] =
     matchPathToGatewayTarget(path)
 
   private def matchPathToGatewayTarget(path: Path) = {
     path match {
-      case s@Segment(head, _) =>
+      case s @ Segment(head, _) =>
         config.targets.get(head)
           .map(gatewayTarget => Matched(s, Tuple1(gatewayTarget)))
           .getOrElse(Unmatched)
@@ -33,8 +33,7 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMa
   }
 }
 
-trait GatewayHttpService extends GatewayTargetDirectives with Logging with Directives with Config {
-  self: GatewayConfigurationManager =>
+trait GatewayHttpService extends GatewayTargetDirectives with Logging with Directives {
 
   implicit val system: ActorSystem
 
@@ -43,6 +42,6 @@ trait GatewayHttpService extends GatewayTargetDirectives with Logging with Direc
   implicit val materializer: Materializer
 
   val gatewayRoute: Route = (ctx: RequestContext) =>
-    serviceRouteForResource(currentConfig())(_.route)(ctx)
+    serviceRouteForResource(GatewayConfigurationManager.currentConfig())(_.route)(ctx)
 }
 

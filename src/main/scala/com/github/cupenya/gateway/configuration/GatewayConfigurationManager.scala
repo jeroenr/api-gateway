@@ -2,18 +2,27 @@ package com.github.cupenya.gateway.configuration
 
 import java.util.concurrent.atomic.AtomicReference
 
-import com.github.cupenya.gateway.client.GatewayTarget
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import com.github.cupenya.gateway.client.GatewayTargetClient
+import com.github.cupenya.gateway.model.GatewayTarget
 
+import scala.concurrent.ExecutionContext
 
-trait GatewayConfigurationManager {
-  private val configHolder = new AtomicReference[GatewayConfiguration](GatewayConfiguration(Map.empty[String, GatewayTarget]))
+object GatewayConfigurationManager {
+  private val configHolder = new AtomicReference[GatewayConfiguration](GatewayConfiguration(Map.empty[String, GatewayTargetClient]))
 
   def currentConfig(): GatewayConfiguration =
     configHolder.get()
 
-  def addGatewayTarget(resource: String, target: GatewayTarget): Unit = {
+  def upsertGatewayTarget(target: GatewayTarget)(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer): Unit = {
     val current = configHolder.get()
-    configHolder.lazySet(current.copy(current.targets.updated(resource, target)))
+    configHolder.lazySet(current.copy(current.targets.updated(target.resource, new GatewayTargetClient(target.address, target.port))))
+  }
+
+  def deleteGatewayTarget(resource: String): Unit = {
+    val current = configHolder.get()
+    configHolder.lazySet(current.copy(current.targets - resource))
   }
 
   def setConfig(config: GatewayConfiguration): Unit =
