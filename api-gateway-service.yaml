@@ -1,0 +1,22 @@
+{
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "api-gateway-service",
+        "labels": {
+          "resource": "health"
+	}
+    },
+    "spec": {
+        "selector": {
+            "app": "api-gateway"
+        },
+        "ports": [
+            {
+                "protocol": "TCP",
+                "port": 8080,
+                "targetPort": 4444
+            }
+        ]
+    }
+}

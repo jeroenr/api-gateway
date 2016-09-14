@@ -36,7 +36,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
         .mapConcat(_.split('\n').toList)
         .map(_.parseJson)
         .map(serviceUpdateJson => {
-          log.info(s"Service update: $serviceUpdateJson")
+          log.debug(s"Service update: $serviceUpdateJson")
           serviceUpdateJson
         })
         .collect {
@@ -98,6 +98,7 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
         serviceMutation.`type`,
         cleanMetadataString(metadata.name),
         cleanMetadataString(resource),
+        cleanMetadataString(metadata.namespace),
         serviceObject.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT)
       )
     }
@@ -107,21 +108,16 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
     value.filterNot('"' ==)
 }
 
-sealed trait KubernetesNamespace {
-  val ns: String
+trait KubernetesNamespace {
+  def namespace: String
 }
 
-trait DefaultKubernetesNamespace extends KubernetesNamespace {
-  override val ns: String = "default"
-}
-
-trait DiscoverableThroughDns extends DiscoverableAddress {
+trait DiscoverableThroughDns extends DiscoverableAddress with KubernetesNamespace {
   self: KubernetesNamespace =>
   val name: String
-  def address: String = s"$name.$ns"
+  def address: String = s"$name.$namespace"
 }
 
-case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, port: Int = 8080)
+case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, namespace: String, port: Int)
   extends ServiceUpdate
   with DiscoverableThroughDns
-  with DefaultKubernetesNamespace

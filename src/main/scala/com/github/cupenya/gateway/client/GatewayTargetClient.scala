@@ -25,6 +25,12 @@ class GatewayTargetClient(val host: String, val port: Int)(
       headers = (hostHeader :: originalHeaders - Host).noEmptyHeaders
     )
     log.info(s"Proxying request: $proxiedRequest")
+    /*
+      TODO: authentication
+      1) get JWT token from auth service
+      2) if successful pass on in request header
+      3) if unsuccessful (expired) forward 401 response
+      */
     Source.single(proxiedRequest)
       .via(connector)
       .runWith(Sink.head)
