@@ -5,9 +5,12 @@ import akka.stream.scaladsl.Source
 import scala.concurrent.Future
 
 class StaticServiceListSource extends ServiceDiscoverySource[StaticServiceUpdate] {
+  val DEFAULT_PORT = 9091
+
   override def source: Future[Source[StaticServiceUpdate, _]] =
-    Future.successful(Source.fromIterator(() =>
-      List(new StaticServiceUpdate(UpdateType.Addition, "health", "localhost", 9091)).toIterator)
+    Future.successful(Source.fromIterator(() => {
+      List(StaticServiceUpdate(UpdateType.Addition, "health", "localhost", DEFAULT_PORT)).toIterator
+    })
     )
 }
 

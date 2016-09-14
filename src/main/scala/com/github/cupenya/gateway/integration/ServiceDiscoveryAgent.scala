@@ -9,13 +9,15 @@ import com.github.cupenya.gateway.model.GatewayTarget
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T])(implicit materializer: Materializer) extends Actor with Logging {
+class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T])(
+  implicit materializer: Materializer) extends Actor with Logging {
+
   import ServiceDiscoveryAgent._
 
   implicit val system: ActorSystem = context.system
   implicit val ec: ExecutionContext = context.dispatcher
 
-  def watchServices() = serviceDiscoverySource.source.map(_.runForeach(serviceUpdate => {
+  def watchServices(): Unit = serviceDiscoverySource.source.map(_.runForeach(serviceUpdate => {
     log.info(s"Service modified $serviceUpdate")
     registerService(serviceUpdate)
   }).onComplete {

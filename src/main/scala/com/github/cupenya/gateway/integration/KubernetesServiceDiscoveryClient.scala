@@ -11,9 +11,9 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import com.github.cupenya.gateway.{Config, Logging}
 import spray.json._
-import scala.language.postfixOps
 
-import scala.concurrent.ExecutionContext
+import scala.language.postfixOps
+import scala.concurrent.{ExecutionContext, Future}
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
   extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
@@ -27,7 +27,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
   private val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true"))))
     .withHeaders(Connection("Keep-Alive"))
 
-  def source = Source
+  def source: Future[Source[KubernetesServiceUpdate, _]] = Source
     .single(req)
     .via(client)
     .runWith(Sink.head).map { res =>
@@ -72,7 +72,8 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
       case JsString("ADDED") => UpdateType.Addition
       case JsString("DELETED") => UpdateType.Deletion
       case JsString("MODIFIED") => UpdateType.Mutation
-      case _ => throw new DeserializationException(s"Couldn't deserialize $json. Was expecting one of [ADDED, DELETED, MODIFIED]")
+      case _ =>
+        throw DeserializationException(s"Couldn't deserialize $json. Was expecting one of [ADDED, DELETED, MODIFIED]")
     }
 
     override def write(updateType: UpdateType): JsValue = updateType match {
@@ -84,6 +85,8 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
 
   implicit val serviceMutationFormat = jsonFormat2(ServiceMutation)
 
+  val DEFAULT_PORT = 8080
+
   def toKubernetesServiceUpdate(jsObject: JsObject): Option[KubernetesServiceUpdate] = {
     val serviceMutation = jsObject.convertTo[ServiceMutation]
     val serviceObject = serviceMutation.`object`
@@ -93,7 +96,7 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
         serviceMutation.`type`,
         cleanMetadataString(metadata.name),
         cleanMetadataString(resource),
-        serviceObject.spec.ports.headOption.map(_.port).getOrElse(8080) )
+        serviceObject.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT) )
     }
   }
 
@@ -115,6 +118,7 @@ trait DiscoverableThroughDns extends DiscoverableAddress {
   def address: String = s"$name.$ns"
 }
 
-case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, port: Int = 8080) extends ServiceUpdate
+case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, port: Int = 8080)
+  extends ServiceUpdate
   with DiscoverableThroughDns
   with DefaultKubernetesNamespace
