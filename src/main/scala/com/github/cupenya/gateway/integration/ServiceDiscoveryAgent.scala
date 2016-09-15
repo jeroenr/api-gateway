@@ -1,19 +1,20 @@
 package com.github.cupenya.gateway.integration
 
-import akka.actor.{Actor, ActorSystem, Cancellable}
+import akka.actor.{ Actor, ActorSystem, Cancellable }
 import akka.stream.Materializer
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.health.ServiceDiscoveryHealthCheck
 import com.github.cupenya.gateway.model.GatewayTarget
-import com.github.cupenya.gateway.{Config, Logging}
+import com.github.cupenya.gateway.{ Config, Logging }
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T])(
-  implicit materializer: Materializer
+    implicit
+    materializer: Materializer
 ) extends Actor with Logging {
 
   import ServiceDiscoveryAgent._

@@ -1,6 +1,6 @@
 package com.github.cupenya.gateway.health
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait HealthCheck {
   def name: String

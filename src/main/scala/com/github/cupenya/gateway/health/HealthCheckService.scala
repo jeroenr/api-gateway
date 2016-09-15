@@ -5,7 +5,7 @@ import java.util.concurrent.TimeoutException
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.DateTime
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import scala.language.postfixOps
 

@@ -26,8 +26,7 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
       get {
         complete {
           runChecks().map(statuses =>
-            statusCodeForStatuses(statuses) -> HealthCheckResults(statuses)
-          )
+            statusCodeForStatuses(statuses) -> HealthCheckResults(statuses))
         }
       }
     }

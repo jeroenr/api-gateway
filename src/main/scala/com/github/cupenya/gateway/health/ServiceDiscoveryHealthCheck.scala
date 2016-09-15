@@ -7,7 +7,7 @@ import akka.util.Timeout
 import com.github.cupenya.gateway.Logging
 import com.github.cupenya.gateway.integration.ServiceDiscoveryAgent
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import scala.language.postfixOps
 

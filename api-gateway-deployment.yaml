@@ -13,6 +13,7 @@ spec:
       containers:
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /health
