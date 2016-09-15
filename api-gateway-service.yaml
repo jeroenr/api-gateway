@@ -3,16 +3,18 @@ kind: Service
 metadata:
   name: api-gateway-service
   labels:
-    run: api-gateway-service
+    app: api-gateway-service
     resource: health
 spec:
   ports:
   - port: 80
+    name: gateway-port
     protocol: TCP
     targetPort: 8080
   - port: 8081
+    name: dashboard-port
     protocol: TCP
     targetPort: 8081
   selector:
-    run: api-gateway-service
+    app: api-gateway
   type: LoadBalancer
