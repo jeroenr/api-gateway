@@ -36,7 +36,8 @@ lazy val dockerImageFromJava = Seq(
   dockerRepository      := Some("eu.gcr.io"),
   defaultLinuxInstallLocation in Docker := s"/opt/${name.value}", // to have consistent directory for files
   dockerCommands ++= Seq(
-    Cmd("LABEL", "com.example.key: value")
+    Cmd("EXPOSE", "8080", "8081"),
+    Cmd("LABEL", "name=api-gateway")
   )
 )
 
