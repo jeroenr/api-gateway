@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: api-gateway-deployment
@@ -6,26 +6,25 @@ spec:
   replicas: 1
   template:
     metadata:
+      name: api-gateway
       labels:
-        app: api-gateway-service
+        app: api-gateway
     spec:
       containers:
-      - name: api-gateway-service
+      - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
-              initialDelaySeconds: 30
         ports:
-          - containerPort: 8080
+        - containerPort: 8080
       - name: kubectl
-        image: "eu.gcr.io/google_containers/kubectl:v0.18.0-120-gaeb4ac55ad12b1-dirty"
+        image: eu.gcr.io/google_containers/kubectl:v0.18.0-120-gaeb4ac55ad12b1-dirty
         imagePullPolicy: Always
-        command:
-          - proxy
         args:
-          - -p
-          - 8001
+        - proxy
+        - "-p"
+        - '8001'
 
 
