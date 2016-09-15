@@ -10,6 +10,9 @@ spec:
   - port: 80
     protocol: TCP
     targetPort: 8080
+  - port: 8081
+    protocol: TCP
+    targetPort: 8081
   selector:
     run: api-gateway-service
   type: LoadBalancer

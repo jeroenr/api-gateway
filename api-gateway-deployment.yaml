@@ -11,6 +11,14 @@ spec:
         app: api-gateway
     spec:
       containers:
+      - name: bb
+        image: gcr.io/google_containers/busybox
+        command:
+        - sh
+        - "-c"
+        - sleep 5; wget -O - localhost:8001/api/v1/watch/services/; sleep 10000
+        ports:
+        - containerPort: 8080
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
         imagePullPolicy: Always
