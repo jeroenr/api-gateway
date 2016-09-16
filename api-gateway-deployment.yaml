@@ -11,17 +11,15 @@ spec:
         app: api-gateway
     spec:
       containers:
-      - name: bb
-        image: gcr.io/google_containers/busybox
-        command:
-        - sh
-        - "-c"
-        - sleep 5; wget -O - localhost:8001/api/v1/watch/services/; sleep 10000
-        ports:
-        - containerPort: 8080
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
         imagePullPolicy: Always
+        env:
+        - name: K8S_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: default-token-y6xrv
+              key: token
         livenessProbe:
           httpGet:
             path: /health
@@ -29,12 +27,5 @@ spec:
         ports:
         - containerPort: 8080
         - containerPort: 8081
-      - name: kubectl
-        image: eu.gcr.io/google_containers/kubectl:v0.18.0-120-gaeb4ac55ad12b1-dirty
-        imagePullPolicy: Always
-        args:
-        - proxy
-        - "-p"
-        - '8001'
 
 

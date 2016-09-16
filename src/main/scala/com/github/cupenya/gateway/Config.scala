@@ -26,6 +26,7 @@ object Config {
       private val k8sConfig = config.getConfig("kubernetes")
       val host = k8sConfig.getString("host")
       val port = k8sConfig.getInt("port")
+      val token = k8sConfig.getString("token")
     }
 
     object reconnect {

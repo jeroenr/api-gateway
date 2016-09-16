@@ -1,7 +1,11 @@
 package com.github.cupenya.gateway.integration
 
+import java.security.cert.X509Certificate
+import java.security.{ SecureRandom }
+import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
+
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers._
@@ -18,14 +22,27 @@ import scala.concurrent.{ ExecutionContext, Future }
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
     extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
 
-  lazy val client = Http(system).outgoingConnection(
+  // FIXME: get rid of SSL hack
+  private val trustAllCerts: Array[TrustManager] = Array(new X509TrustManager() {
+    override def getAcceptedIssuers = null
+
+    override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = {}
+
+    override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = {}
+  })
+
+  private val ssl = SSLContext.getInstance("SSL")
+  ssl.init(null, trustAllCerts, new SecureRandom())
+
+  lazy val client = Http(system).outgoingConnectionHttps(
     Config.integration.kubernetes.host,
     Config.integration.kubernetes.port,
+    connectionContext = new HttpsConnectionContext(ssl),
     settings = ClientConnectionSettings(system)
   )
 
   private val req = HttpRequest(GET, Uri(s"/api/v1/watch/services").withQuery(Query(Map("watch" -> "true"))))
-    .withHeaders(Connection("Keep-Alive"))
+    .withHeaders(Connection("Keep-Alive"), Authorization(OAuth2BearerToken(Config.integration.kubernetes.token)))
 
   def source: Future[Source[KubernetesServiceUpdate, _]] = Source
     .single(req)
