@@ -31,6 +31,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   private val disconnected: Receive = {
     case WatchServices =>
       log.info(s"Starting watching services")
+      // TODO: fix health check
       watchServices()
     case HealthCheck => sender() ! ServiceDiscoveryHealthCheck.NOK
   }
@@ -38,30 +39,9 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   def watchServices(): Unit = {
     system.scheduler.schedule(RECONNECT_DELAY_IN_SECONDS seconds, 5 seconds) {
       // TODO: handle deletes
-      serviceDiscoverySource.source.map(serviceUpdates => serviceUpdates.map(registerService))
+      serviceDiscoverySource.source.map(serviceUpdates => serviceUpdates.foreach(registerService))
     }
   }
-
-  //  def watchServices(): Unit = serviceDiscoverySource.source.map(_.runForeach(serviceUpdate => {
-  //    log.info(s"Service modified $serviceUpdate")
-  //    registerService(serviceUpdate)
-  //  }).onComplete {
-  //    case Success(done) =>
-  //      log.warn(s"Service discovery stream ended unexpectedly with '$done'. " +
-  //        s"Reconnecting in $RECONNECT_DELAY_IN_SECONDS seconds")
-  //      tryReconnect
-  //    case Failure(t) =>
-  //      log.error(s"Service discovery stream failed. Reconnecting in $RECONNECT_DELAY_IN_SECONDS seconds.", t)
-  //      tryReconnect
-  //  }).onComplete {
-  //    case Success(_) =>
-  //      log.info(s"Successfully connected to service discovery source '${serviceDiscoverySource.name}'.")
-  //      context.become(connected)
-  //    case Failure(t) =>
-  //      log.error(s"Failed to connect to service discovery source '${serviceDiscoverySource.name}'. " +
-  //        s"Retrying in $RECONNECT_DELAY_IN_SECONDS seconds.", t)
-  //      tryReconnect
-  //  }
 
   private def tryReconnect: Cancellable = {
     context.become(disconnected)

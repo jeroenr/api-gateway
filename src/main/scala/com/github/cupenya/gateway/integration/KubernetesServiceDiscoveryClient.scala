@@ -76,8 +76,6 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
 
   case class ServiceObject(spec: Spec, metadata: Metadata)
 
-  //  case class ServiceMutation(`type`: UpdateType, `object`: ServiceObject)
-
   case class ServiceList(items: List[ServiceObject])
 
   implicit val portMappingFormat = jsonFormat4(PortMapping)
@@ -86,52 +84,19 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
   implicit val serviceObjectFormat = jsonFormat2(ServiceObject)
   implicit val serviceListFormat = jsonFormat1(ServiceList)
 
-  //  implicit val unmarshaller = PredefinedFromEntityUnmarshallers.
-
-  implicit val toServiceListUnmarshaller: Unmarshaller[HttpEntity, ServiceList] = Unmarshaller.withMaterializer { implicit ex ⇒ implicit mat ⇒ entity: HttpEntity ⇒
+  implicit val toServiceListUnmarshaller: Unmarshaller[HttpEntity, ServiceList] =
+    Unmarshaller.withMaterializer { implicit ex ⇒ implicit mat ⇒ entity: HttpEntity ⇒
     entity.dataBytes
       .map(_.utf8String.parseJson)
       .collect {
         case jsObj: JsObject => jsObj.convertTo[ServiceList]
-      }.runWith(Sink.head)
+      }
+      .runWith(Sink.head)
   }
-
-  //  implicit object UpdateTypeFormat extends RootJsonFormat[UpdateType] {
-  //    override def read(json: JsValue): UpdateType = json match {
-  //      case JsString("ADDED") => UpdateType.Addition
-  //      case JsString("DELETED") => UpdateType.Deletion
-  //      case JsString("MODIFIED") => UpdateType.Mutation
-  //      case _ =>
-  //        throw DeserializationException(s"Couldn't deserialize $json. Was expecting one of [ADDED, DELETED, MODIFIED]")
-  //    }
-  //
-  //    override def write(updateType: UpdateType): JsValue = updateType match {
-  //      case UpdateType.Addition => JsString("ADDED")
-  //      case UpdateType.Deletion => JsString("DELETED")
-  //      case UpdateType.Mutation => JsString("MODIFIED")
-  //    }
-  //  }
-
-  //  implicit val serviceMutationFormat = jsonFormat2(ServiceMutation)
 
   val DEFAULT_PORT = 8080
 
-  //  def toKubernetesServiceUpdate(jsObject: JsObject): Option[KubernetesServiceUpdate] = {
-  //    val serviceMutation = jsObject.convertTo[ServiceMutation]
-  //    val serviceObject = serviceMutation.`object`
-  //    val metadata: Metadata = serviceObject.metadata
-  //    metadata.labels.flatMap(_.get("resource")).map { resource =>
-  //      KubernetesServiceUpdate(
-  //        serviceMutation.`type`,
-  //        cleanMetadataString(metadata.name),
-  //        cleanMetadataString(resource),
-  //        cleanMetadataString(metadata.namespace),
-  //        serviceObject.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT)
-  //      )
-  //    }
-  //  }
-
-  def cleanMetadataString(value: String) =
+  protected def cleanMetadataString(value: String) =
     value.filterNot('"' ==)
 }
 
