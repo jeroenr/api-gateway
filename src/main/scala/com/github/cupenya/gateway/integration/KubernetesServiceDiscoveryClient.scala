@@ -5,13 +5,13 @@ import java.security.SecureRandom
 import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.HttpMethods._
-import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.{ HttpRequest, _ }
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Sink, Source }
 import com.github.cupenya.gateway.{ Config, Logging }
@@ -21,7 +21,7 @@ import scala.language.postfixOps
 import scala.concurrent.{ ExecutionContext, Future }
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
-    extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with Logging {
+    extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
 
   // FIXME: get rid of SSL hack
   private val trustAllCerts: Array[TrustManager] = Array(new X509TrustManager() {
@@ -85,6 +85,16 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
   implicit val metadataFormat = jsonFormat4(Metadata)
   implicit val serviceObjectFormat = jsonFormat2(ServiceObject)
   implicit val serviceListFormat = jsonFormat1(ServiceList)
+
+  //  implicit val unmarshaller = PredefinedFromEntityUnmarshallers.
+
+  implicit val toServiceListUnmarshaller: Unmarshaller[HttpEntity, ServiceList] = Unmarshaller.withMaterializer { implicit ex ⇒ implicit mat ⇒ entity: HttpEntity ⇒
+    entity.dataBytes
+      .map(_.utf8String.parseJson)
+      .collect {
+        case jsObj: JsObject => jsObj.convertTo[ServiceList]
+      }.runWith(Sink.head)
+  }
 
   //  implicit object UpdateTypeFormat extends RootJsonFormat[UpdateType] {
   //    override def read(json: JsValue): UpdateType = json match {
