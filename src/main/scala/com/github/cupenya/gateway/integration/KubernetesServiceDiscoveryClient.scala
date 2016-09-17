@@ -86,13 +86,13 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
 
   implicit val toServiceListUnmarshaller: Unmarshaller[HttpEntity, ServiceList] =
     Unmarshaller.withMaterializer { implicit ex ⇒ implicit mat ⇒ entity: HttpEntity ⇒
-    entity.dataBytes
-      .map(_.utf8String.parseJson)
-      .collect {
-        case jsObj: JsObject => jsObj.convertTo[ServiceList]
-      }
-      .runWith(Sink.head)
-  }
+      entity.dataBytes
+        .map(_.utf8String.parseJson)
+        .collect {
+          case jsObj: JsObject => jsObj.convertTo[ServiceList]
+        }
+        .runWith(Sink.head)
+    }
 
   val DEFAULT_PORT = 8080
 

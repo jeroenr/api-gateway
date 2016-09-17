@@ -38,8 +38,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
 
   def watchServices(): Unit = {
     system.scheduler.schedule(RECONNECT_DELAY_IN_SECONDS seconds, 5 seconds) {
-      // TODO: handle deletes
-      serviceDiscoverySource.source.map(serviceUpdates => serviceUpdates.foreach(registerService))
+      serviceDiscoverySource.source.map(handleServiceUpdates)
     }
   }
 
@@ -50,16 +49,19 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
 
   override def receive: Receive = disconnected
 
-  private def registerService(serviceUpdate: T): Unit = {
-    serviceUpdate.updateType match {
-      case UpdateType.Addition | UpdateType.Mutation =>
-        val gatewayTarget = GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port)
-        log.info(s"Registering new gateway target $gatewayTarget")
-        GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
-      case UpdateType.Deletion =>
-        log.info(s"Deleting gateway target ${serviceUpdate.address}")
-        GatewayConfigurationManager.deleteGatewayTarget(serviceUpdate.resource)
-    }
+  private def handleServiceUpdates(serviceUpdates: List[T]) = {
+    val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
+    val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
+    log.info(s"Deleting $toDelete")
+    toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
+
+    val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
+    log.info(s"New services $newResources")
+    newResources.foreach(serviceUpdate => {
+      val gatewayTarget = GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port)
+      log.info(s"Registering new gateway target $gatewayTarget")
+      GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
+    })
   }
 }
 
