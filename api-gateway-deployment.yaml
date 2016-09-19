@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: api-gateway-deployment
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       name: api-gateway
@@ -24,6 +24,10 @@ spec:
           value: "kubernetes"
         - name: K8S_API_PORT
           value: "443"
+        - name: AUTH_HOST
+          value: "auth-service-service.default"
+        - name: AUTH_PORT
+          value: "80"
         livenessProbe:
           httpGet:
             path: /health
