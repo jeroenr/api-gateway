@@ -22,6 +22,12 @@ object Config {
   object integration {
     private val config = rootConfig.getConfig("integration")
 
+    object authentication {
+      private val authConfig = config.getConfig("authentication")
+      val host = authConfig.getString("host")
+      val port = authConfig.getInt("port")
+    }
+
     object kubernetes {
       private val k8sConfig = config.getConfig("kubernetes")
       val host = k8sConfig.getString("host")

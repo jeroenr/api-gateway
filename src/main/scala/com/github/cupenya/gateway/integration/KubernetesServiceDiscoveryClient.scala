@@ -2,26 +2,26 @@ package com.github.cupenya.gateway.integration
 
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import javax.net.ssl.{SSLContext, TrustManager, X509TrustManager}
+import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.{Http, HttpsConnectionContext}
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
-import com.github.cupenya.gateway.{Config, Logging}
+import akka.stream.scaladsl.{ Sink, Source }
+import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.postfixOps
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
-  extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
+    extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
 
   // FIXME: get rid of SSL hack
   private val trustAllCerts: Array[TrustManager] = Array(new X509TrustManager() {
@@ -124,4 +124,4 @@ trait DiscoverableThroughDns extends DiscoverableAddress with KubernetesNamespac
 
 case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, namespace: String, port: Int)
   extends ServiceUpdate
-    with DiscoverableThroughDns
+  with DiscoverableThroughDns
