@@ -2,26 +2,26 @@ package com.github.cupenya.gateway.integration
 
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
+import javax.net.ssl.{SSLContext, TrustManager, X509TrustManager}
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.{Http, HttpsConnectionContext}
+import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.model.{ HttpRequest, _ }
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
-import akka.http.scaladsl.{ Http, HttpsConnectionContext }
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Sink, Source }
-import com.github.cupenya.gateway.{ Config, Logging }
+import akka.stream.scaladsl.{Sink, Source}
+import com.github.cupenya.gateway.{Config, Logging}
 import spray.json._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
-    extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
+  extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
 
   // FIXME: get rid of SSL hack
   private val trustAllCerts: Array[TrustManager] = Array(new X509TrustManager() {
@@ -38,7 +38,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
   private val port = Config.integration.kubernetes.port
   private val host = Config.integration.kubernetes.host
 
-  lazy val client = if (port == 443) {
+  private lazy val client = if (port == 443) {
     Http(system).outgoingConnectionHttps(
       host,
       port,
@@ -49,7 +49,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
     Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
   }
 
-  private val req = HttpRequest(GET, Uri(s"/api/v1/services"))
+  private val req = Get(s"/api/v1/services")
     .withHeaders(Connection("Keep-Alive"), Authorization(OAuth2BearerToken(Config.integration.kubernetes.token)))
 
   def healthCheck: Future[_] =
@@ -94,6 +94,7 @@ trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
   implicit val serviceObjectFormat = jsonFormat2(ServiceObject)
   implicit val serviceListFormat = jsonFormat1(ServiceList)
 
+  // FIXME: is this really necessary?
   implicit val toServiceListUnmarshaller: Unmarshaller[HttpEntity, ServiceList] =
     Unmarshaller.withMaterializer { implicit ex ⇒ implicit mat ⇒ entity: HttpEntity ⇒
       entity.dataBytes
@@ -123,4 +124,4 @@ trait DiscoverableThroughDns extends DiscoverableAddress with KubernetesNamespac
 
 case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, namespace: String, port: Int)
   extends ServiceUpdate
-  with DiscoverableThroughDns
+    with DiscoverableThroughDns
