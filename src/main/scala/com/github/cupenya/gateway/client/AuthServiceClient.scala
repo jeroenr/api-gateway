@@ -15,7 +15,8 @@ import spray.json._
 import scala.concurrent.{ ExecutionContext, Future }
 
 class AuthServiceClient(host: String, port: Int)(
-  implicit val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
+    implicit
+    val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
 ) extends DefaultJsonProtocol with SprayJsonSupport with Logging {
 
   implicit val jwtFormat = jsonFormat1(JwtTokenResponse)
