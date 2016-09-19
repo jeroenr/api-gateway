@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: api-gateway-deployment
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       name: api-gateway
@@ -20,12 +20,14 @@ spec:
             secretKeyRef:
               name: default-token-y6xrv
               key: token
-#        livenessProbe:
-#          httpGet:
- #           path: /health
- #           port: 8081
+        - name: K8S_API_HOST
+          value: "kubernetes"
+        - name: K8S_API_PORT
+          value: "443"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
         ports:
         - containerPort: 8080
         - containerPort: 8081
-
-

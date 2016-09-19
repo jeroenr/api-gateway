@@ -29,5 +29,6 @@ trait ServiceUpdate extends DiscoverableAddress {
 
 trait ServiceDiscoverySource[T <: ServiceUpdate] extends Logging {
   def name: String
-  def source: Future[List[T]]
+  def healthCheck: Future[_]
+  def listServices: Future[List[T]]
 }

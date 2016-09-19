@@ -1,24 +1,24 @@
 package com.github.cupenya.gateway.integration
 
-import java.security.cert.X509Certificate
 import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.{ HttpRequest, _ }
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Sink, Source }
 import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json._
 
-import scala.language.postfixOps
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.language.postfixOps
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
     extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
@@ -35,17 +35,27 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
   private val ssl = SSLContext.getInstance("SSL")
   ssl.init(null, trustAllCerts, new SecureRandom())
 
-  lazy val client = Http(system).outgoingConnectionHttps(
-    Config.integration.kubernetes.host,
-    Config.integration.kubernetes.port,
-    connectionContext = new HttpsConnectionContext(ssl),
-    settings = ClientConnectionSettings(system)
-  )
+  private val port = Config.integration.kubernetes.port
+  private val host = Config.integration.kubernetes.host
+
+  lazy val client = if (port == 443) {
+    Http(system).outgoingConnectionHttps(
+      host,
+      port,
+      connectionContext = new HttpsConnectionContext(ssl),
+      settings = ClientConnectionSettings(system)
+    )
+  } else {
+    Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
+  }
 
   private val req = HttpRequest(GET, Uri(s"/api/v1/services"))
     .withHeaders(Connection("Keep-Alive"), Authorization(OAuth2BearerToken(Config.integration.kubernetes.token)))
 
-  def source: Future[List[KubernetesServiceUpdate]] = Source
+  def healthCheck: Future[_] =
+    Source.single(req).via(client).runWith(Sink.head).filter(_.status.isSuccess())
+
+  def listServices: Future[List[KubernetesServiceUpdate]] = Source
     .single(req)
     .via(client)
     .mapAsync(1)(res =>
@@ -107,6 +117,7 @@ trait KubernetesNamespace {
 trait DiscoverableThroughDns extends DiscoverableAddress with KubernetesNamespace {
   self: KubernetesNamespace =>
   val name: String
+
   def address: String = s"$name.$namespace"
 }
 

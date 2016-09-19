@@ -1,6 +1,6 @@
 package com.github.cupenya.gateway.integration
 
-import akka.actor.{ Actor, ActorSystem, Cancellable }
+import akka.actor.{ Actor, ActorRef, ActorSystem, Cancellable }
 import akka.stream.Materializer
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.health.ServiceDiscoveryHealthCheck
@@ -24,30 +24,36 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
 
   val RECONNECT_DELAY_IN_SECONDS = Config.integration.reconnect.delay
 
-  private val connected: Receive = {
-    case HealthCheck => sender() ! ServiceDiscoveryHealthCheck.OK
+  private val watchingServices: Receive = {
+    case HealthCheck => handleHealthCheck(sender())
   }
 
-  private val disconnected: Receive = {
+  private val bootstrapping: Receive = {
     case WatchServices =>
       log.info(s"Starting watching services")
-      // TODO: fix health check
+      context.become(watchingServices)
       watchServices()
-    case HealthCheck => sender() ! ServiceDiscoveryHealthCheck.NOK
+    case HealthCheck => handleHealthCheck(sender())
+  }
+
+  private def handleHealthCheck(sender: ActorRef): Unit = {
+    serviceDiscoverySource.healthCheck.onComplete {
+      case Success(_) =>
+        log.info("Service discovery is healthy")
+        sender ! ServiceDiscoveryHealthCheck.OK
+      case Failure(t) =>
+        log.error(s"Service discovery is unhealthy: ${t.getMessage}", t)
+        sender ! ServiceDiscoveryHealthCheck.NOK
+    }
   }
 
   def watchServices(): Unit = {
     system.scheduler.schedule(RECONNECT_DELAY_IN_SECONDS seconds, 5 seconds) {
-      serviceDiscoverySource.source.map(handleServiceUpdates)
+      serviceDiscoverySource.listServices.map(handleServiceUpdates)
     }
   }
 
-  private def tryReconnect: Cancellable = {
-    context.become(disconnected)
-    context.system.scheduler.scheduleOnce(RECONNECT_DELAY_IN_SECONDS seconds, self, WatchServices)
-  }
-
-  override def receive: Receive = disconnected
+  override def receive: Receive = bootstrapping
 
   private def handleServiceUpdates(serviceUpdates: List[T]) = {
     val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
