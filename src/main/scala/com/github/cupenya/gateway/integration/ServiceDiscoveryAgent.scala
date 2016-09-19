@@ -22,7 +22,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   implicit val system: ActorSystem = context.system
   implicit val ec: ExecutionContext = context.dispatcher
 
-  val RECONNECT_DELAY_IN_SECONDS = Config.integration.reconnect.delay
+  val SERVICE_POLLING_INTERVAL = Config.integration.polling.interval
 
   private val watchingServices: Receive = {
     case HealthCheck => handleHealthCheck(sender())
@@ -48,7 +48,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   }
 
   def watchServices(): Unit = {
-    system.scheduler.schedule(RECONNECT_DELAY_IN_SECONDS seconds, 5 seconds) {
+    system.scheduler.schedule(SERVICE_POLLING_INTERVAL seconds, 5 seconds) {
       serviceDiscoverySource.listServices.map(handleServiceUpdates)
     }
   }

@@ -31,6 +31,8 @@ class GatewayTargetClient(val host: String, val port: Int)(
       2) if successful pass on in request header
       3) if unsuccessful (expired) forward 401 response
       */
+//    Source.single()
+
     Source.single(proxiedRequest)
       .via(connector)
       .runWith(Sink.head)
