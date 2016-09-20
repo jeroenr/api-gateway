@@ -4,7 +4,6 @@ metadata:
   name: api-gateway-service
   labels:
     app: api-gateway-service
-    resource: health
 spec:
   ports:
   - port: 80

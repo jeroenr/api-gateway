@@ -1,6 +1,6 @@
 package com.github.cupenya.gateway.integration
 
-import akka.actor.{ Actor, ActorRef, ActorSystem, Cancellable }
+import akka.actor.{ Actor, ActorRef, ActorSystem }
 import akka.stream.Materializer
 import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.health.ServiceDiscoveryHealthCheck
@@ -39,7 +39,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   private def handleHealthCheck(sender: ActorRef): Unit = {
     serviceDiscoverySource.healthCheck.onComplete {
       case Success(_) =>
-        log.info("Service discovery is healthy")
+        log.debug("Service discovery is healthy")
         sender ! ServiceDiscoveryHealthCheck.OK
       case Failure(t) =>
         log.error(s"Service discovery is unhealthy: ${t.getMessage}", t)
@@ -58,11 +58,11 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   private def handleServiceUpdates(serviceUpdates: List[T]) = {
     val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
     val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
-    log.info(s"Deleting $toDelete")
+    log.debug(s"Deleting $toDelete")
     toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
 
     val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
-    log.info(s"New services $newResources")
+    log.debug(s"New services $newResources")
     newResources.foreach(serviceUpdate => {
       val gatewayTarget = GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port)
       log.info(s"Registering new gateway target $gatewayTarget")

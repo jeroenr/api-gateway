@@ -68,7 +68,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
             cleanMetadataString(so.metadata.namespace),
             so.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT)
           )
-          log.info(s"Got Kubernetes service update $ksu")
+          log.debug(s"Got Kubernetes service update $ksu")
           ksu
         }))))
     .runWith(Sink.head)

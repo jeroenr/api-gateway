@@ -26,7 +26,7 @@ class GatewayTargetClient(val host: String, val port: Int)(
   val route = Route { context =>
     val request = context.request
     val originalHeaders = request.headers.toList
-    val filteredHeaders = (hostHeader :: originalHeaders - Host).noEmptyHeaders
+    val filteredHeaders = (hostHeader :: originalHeaders - Host - Authorization).noEmptyHeaders
 
     if (request.uri.path.startsWith(Path("/auth/login"))) {
       log.info("Login request")
