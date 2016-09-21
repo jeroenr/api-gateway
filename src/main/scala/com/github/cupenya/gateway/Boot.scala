@@ -26,7 +26,7 @@ object Boot extends App
 
   log.info(s"Starting API gateway using gatewayInterface $gatewayInterface and port $gatewayPort")
 
-  Http().bindAndHandle(gatewayRoute, gatewayInterface, gatewayPort).transform(
+  Http().bindAndHandle(authRoute ~ gatewayRoute, gatewayInterface, gatewayPort).transform(
     binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
   )
 
