@@ -26,7 +26,7 @@ class AuthServiceClient(host: String, port: Int)(
   private val client = Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
 
   def getToken(headers: Seq[HttpHeader]): Future[Either[HttpResponse, JwtTokenResponse]] = {
-    log.info(s"Getting token with headers $headers")
+    log.debug(s"Getting token with headers $headers")
     Source
       .single(Get("/auth/token").withHeaders(headers: _*))
       .via(client)

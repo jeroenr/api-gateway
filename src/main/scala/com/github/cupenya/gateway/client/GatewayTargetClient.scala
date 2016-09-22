@@ -26,10 +26,10 @@ class GatewayTargetClient(val host: String, val port: Int)(
     val request = context.request
     val originalHeaders = request.headers.toList
     val filteredHeaders = (hostHeader :: originalHeaders - Host).noEmptyHeaders
-    log.info(s"Need token for request ${request.uri.path}")
+    log.debug(s"Need token for request ${request.uri.path}")
     authClient.getToken(filteredHeaders).flatMap {
       case Right(tokenResponse) =>
-        log.info(s"Token ${tokenResponse.jwt}")
+        log.debug(s"Token ${tokenResponse.jwt}")
         val headersWithAuth = Authorization(OAuth2BearerToken(tokenResponse.jwt)) :: filteredHeaders
         proxyRequest(context, request, headersWithAuth)
       case Left(errorResponse) =>
@@ -49,7 +49,7 @@ class GatewayTargetClient(val host: String, val port: Int)(
       uri = createProxiedUri(context, request.uri),
       headers = headers
     )
-    log.info(s"Proxying request: $proxiedRequest")
+    log.debug(s"Proxying request: $proxiedRequest")
     Source.single(proxiedRequest)
       .via(connector)
       .runWith(Sink.head)
