@@ -1,12 +1,14 @@
 package com.github.cupenya.gateway.server
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.GatewayTargetClient
+import com.github.cupenya.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
 import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
-import com.github.cupenya.gateway.Logging
+import com.github.cupenya.gateway.{ Config, Logging }
+import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
 
@@ -33,15 +35,37 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMa
   }
 }
 
-trait GatewayHttpService extends GatewayTargetDirectives with Logging with Directives {
+trait GatewayHttpService extends GatewayTargetDirectives
+    with Logging
+    with SprayJsonSupport
+    with DefaultJsonProtocol
+    with Directives {
 
-  implicit val system: ActorSystem
+  implicit def system: ActorSystem
 
   implicit def ec: ExecutionContext
 
   implicit val materializer: Materializer
 
+  implicit val loginDataFormat = jsonFormat2(LoginData)
+
   val gatewayRoute: Route = (ctx: RequestContext) =>
     serviceRouteForResource(GatewayConfigurationManager.currentConfig())(_.route)(ctx)
+
+  private lazy val authClient = new AuthServiceClient(
+    Config.integration.authentication.host,
+    Config.integration.authentication.port
+  )
+
+  val authRoute =
+    pathPrefix("auth") {
+      path("login") {
+        post {
+          entity(as[LoginData]) { loginData =>
+            complete(authClient.login(loginData))
+          }
+        }
+      }
+    }
 }
 

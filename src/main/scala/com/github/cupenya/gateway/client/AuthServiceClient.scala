@@ -5,6 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
@@ -20,6 +21,7 @@ class AuthServiceClient(host: String, port: Int)(
 ) extends DefaultJsonProtocol with SprayJsonSupport with Logging {
 
   implicit val jwtFormat = jsonFormat1(JwtTokenResponse)
+  implicit val loginDataFormat = jsonFormat2(LoginData)
 
   private val client = Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
 
@@ -36,6 +38,16 @@ class AuthServiceClient(host: String, port: Int)(
         }
       }
   }
+
+  def login(loginData: LoginData): Future[HttpResponse] = {
+    Source
+      .single(Post("/auth/login")
+        .withEntity(`application/json`, loginData.toJson.compactPrint))
+      .via(client)
+      .runWith(Sink.head)
+  }
 }
 
 case class JwtTokenResponse(jwt: String)
+
+case class LoginData(user: String, password: String)
