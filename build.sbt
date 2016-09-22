@@ -9,7 +9,7 @@ scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf
 resolvers += Resolver.jcenterRepo
 
 libraryDependencies ++= {
-  val akkaV            = "2.4.7"
+  val akkaV            = "2.4.10"
   val ficusV           = "1.2.4"
   val scalaTestV       = "3.0.0-M15"
   val slf4sV           = "1.7.10"
