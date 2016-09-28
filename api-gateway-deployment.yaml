@@ -10,6 +10,8 @@ spec:
       labels:
         app: api-gateway
     spec:
+      nodeSelector:
+        "cloud.google.com/gke-nodepool": build-pool
       containers:
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
