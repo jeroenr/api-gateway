@@ -2,23 +2,24 @@ package com.github.cupenya.gateway.integration
 
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
+import javax.net.ssl.{SSLContext, TrustManager, X509TrustManager}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.{ Http, HttpsConnectionContext }
+import akka.http.scaladsl.{Http, HttpsConnectionContext}
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Sink, Source }
-import com.github.cupenya.gateway.{ Config, Logging }
+import akka.stream.scaladsl.{Sink, Source}
+import com.github.cupenya.gateway.{Config, Logging}
 import spray.json._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
+import scala.util.Try
 
 class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer)
     extends ServiceDiscoverySource[KubernetesServiceUpdate] with KubernetesServiceUpdateParser with SprayJsonSupport with Logging {
@@ -66,7 +67,11 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
             cleanMetadataString(so.metadata.name),
             cleanMetadataString(resource),
             cleanMetadataString(so.metadata.namespace),
-            so.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT)
+            so.spec.ports.headOption.map(_.port).getOrElse(DEFAULT_PORT),
+            so.metadata.labels
+              .flatMap(_.get("secured"))
+              .flatMap(value => Try(value.toBoolean).toOption)
+              .getOrElse(true) // Default is secured
           )
           log.debug(s"Got Kubernetes service update $ksu")
           ksu
@@ -122,6 +127,6 @@ trait DiscoverableThroughDns extends DiscoverableAddress with KubernetesNamespac
   def address: String = s"$name.$namespace"
 }
 
-case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, namespace: String, port: Int)
+case class KubernetesServiceUpdate(updateType: UpdateType, name: String, resource: String, namespace: String, port: Int, secured: Boolean)
   extends ServiceUpdate
   with DiscoverableThroughDns

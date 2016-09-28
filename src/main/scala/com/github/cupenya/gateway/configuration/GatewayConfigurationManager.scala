@@ -17,7 +17,9 @@ object GatewayConfigurationManager {
 
   def upsertGatewayTarget(target: GatewayTarget)(implicit system: ActorSystem, ec: ExecutionContext, materializer: Materializer): Unit = {
     val current = configHolder.get()
-    configHolder.lazySet(current.copy(current.targets.updated(target.resource, new GatewayTargetClient(target.address, target.port))))
+    configHolder.lazySet(current.copy(
+      current.targets.updated(target.resource, new GatewayTargetClient(target.address, target.port, target.secured))
+    ))
   }
 
   def deleteGatewayTarget(resource: String): Unit = {

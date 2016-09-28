@@ -1,6 +1,5 @@
 package com.github.cupenya.gateway.integration
 
-import akka.stream.scaladsl.Source
 import com.github.cupenya.gateway.Logging
 
 import scala.concurrent.Future
@@ -24,6 +23,7 @@ trait DiscoverableAddress {
 trait ServiceUpdate extends DiscoverableAddress {
   def updateType: UpdateType
   def resource: String
+  def secured: Boolean
   def port: Int
 }
 

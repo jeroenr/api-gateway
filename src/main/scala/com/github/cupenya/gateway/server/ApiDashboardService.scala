@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext
 trait Protocols extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val serviceRouteFormat = jsonFormat3(ServiceRoute)
   implicit val serviceRoutesFormat = jsonFormat1(ServiceRoutes)
-  implicit val registerServiceRouteFormat = jsonFormat4(RegisterServiceRoute)
+  implicit val registerServiceRouteFormat = jsonFormat5(RegisterServiceRoute)
 }
 
 trait ApiDashboardService extends Directives with Protocols {
@@ -30,6 +30,8 @@ trait ApiDashboardService extends Directives with Protocols {
 
   implicit val timeout = Timeout(5 seconds)
 
+  private val DEFAULT_PORT = 80
+
   val dashboardRoute =
     pathPrefix("services") {
       pathEndOrSingleSlash {
@@ -42,9 +44,11 @@ trait ApiDashboardService extends Directives with Protocols {
         } ~
           post {
             entity(as[RegisterServiceRoute]) {
-              case RegisterServiceRoute(name, host, resource, maybePort) =>
+              case RegisterServiceRoute(name, host, resource, maybePort, maybeSecured) =>
                 complete {
-                  GatewayConfigurationManager.upsertGatewayTarget(GatewayTarget(resource, host, maybePort.getOrElse(80)))
+                  GatewayConfigurationManager.upsertGatewayTarget(
+                    GatewayTarget(resource, host, maybePort.getOrElse(DEFAULT_PORT), maybeSecured.getOrElse(true))
+                  )
                   StatusCodes.NoContent -> None
                 }
             }
@@ -53,18 +57,8 @@ trait ApiDashboardService extends Directives with Protocols {
     }
 }
 
-object RouteManager {
-
-  case object ListServices
-
-  case class GetServiceByResource(resource: String)
-
-  case class AddServiceRoute(name: String, host: String, resource: String, port: Option[Int] = None)
-
-}
-
 case class ServiceRoute(resource: String, host: String, port: Int)
 
 case class ServiceRoutes(services: List[ServiceRoute])
 
-case class RegisterServiceRoute(name: String, host: String, resource: String, port: Option[Int] = None)
+case class RegisterServiceRoute(name: String, host: String, resource: String, port: Option[Int] = None, secured: Option[Boolean] = None)

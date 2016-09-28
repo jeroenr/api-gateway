@@ -64,7 +64,8 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
     val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
     log.debug(s"New services $newResources")
     newResources.foreach(serviceUpdate => {
-      val gatewayTarget = GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port)
+      val gatewayTarget =
+        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
       log.info(s"Registering new gateway target $gatewayTarget")
       GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
     })
