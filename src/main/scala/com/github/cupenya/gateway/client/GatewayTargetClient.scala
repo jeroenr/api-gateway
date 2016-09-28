@@ -62,7 +62,6 @@ class GatewayTargetClient(val host: String, val port: Int)(
   private def createProxiedUri(ctx: RequestContext, originalUri: Uri): Uri = {
     val uri = originalUri
       .withHost(host)
-      //      .withPort(port)
       .withPath(originalUri.path)
       .withQuery(originalUri.query())
     if (port == 80 || port == 443) uri else uri.withPort(port)
