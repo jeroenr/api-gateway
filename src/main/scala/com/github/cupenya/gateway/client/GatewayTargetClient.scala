@@ -56,13 +56,16 @@ class GatewayTargetClient(val host: String, val port: Int)(
       .flatMap(context.complete(_))
   }
 
-  private def hostHeader: Host = Host(host, port)
+  private def hostHeader: Host =
+    if (port == 80 || port == 443) Host(host) else Host(host, port)
 
-  private def createProxiedUri(ctx: RequestContext, originalUri: Uri): Uri =
-    originalUri
+  private def createProxiedUri(ctx: RequestContext, originalUri: Uri): Uri = {
+    val uri = originalUri
       .withHost(host)
-      .withPort(port)
+      //      .withPort(port)
       .withPath(originalUri.path)
       .withQuery(originalUri.query())
+    if (port == 80 || port == 443) uri else uri.withPort(port)
+  }
 
 }
