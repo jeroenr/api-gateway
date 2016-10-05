@@ -59,6 +59,13 @@ trait GatewayHttpService extends GatewayTargetDirectives
 
   val authRoute =
     pathPrefix("auth") {
+      path("currentUser") {
+        get {
+          extractRequest { req =>
+            complete(authClient.currentUser(req.headers))
+          }
+        }
+      } ~
       path("login") {
         post {
           entity(as[LoginData]) { loginData =>

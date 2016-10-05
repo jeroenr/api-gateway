@@ -4,16 +4,16 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ContentTypes._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.{Sink, Source}
 import com.github.cupenya.gateway.Logging
 import spray.json._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuthServiceClient(host: String, port: Int)(
     implicit
@@ -43,6 +43,13 @@ class AuthServiceClient(host: String, port: Int)(
     Source
       .single(Post("/auth/login")
         .withEntity(`application/json`, loginData.toJson.compactPrint))
+      .via(client)
+      .runWith(Sink.head)
+  }
+
+  def currentUser(headers: Seq[HttpHeader]): Future[HttpResponse] = {
+    Source
+      .single(Get("auth/currentUser").withHeaders(headers: _*))
       .via(client)
       .runWith(Sink.head)
   }
