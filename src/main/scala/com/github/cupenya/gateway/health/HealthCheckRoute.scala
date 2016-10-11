@@ -22,6 +22,11 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
   implicit val healthCheckResultsFormat = jsonFormat1(HealthCheckResults)
 
   val healthRoute =
+    pathEndOrSingleSlash {
+      get {
+        complete(StatusCodes.OK, None)
+      }
+    } ~
     path("health") {
       get {
         complete {

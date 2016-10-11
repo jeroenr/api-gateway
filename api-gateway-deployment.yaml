@@ -30,6 +30,10 @@ spec:
           value: "auth-service-service.default"
         - name: AUTH_PORT
           value: "80"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
         livenessProbe:
           httpGet:
             path: /health
