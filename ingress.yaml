@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: foo.cupenya.com
+    http:
+      paths: 
+      - backend:
+          serviceName: api-gateway-service
+          servicePort: 80
