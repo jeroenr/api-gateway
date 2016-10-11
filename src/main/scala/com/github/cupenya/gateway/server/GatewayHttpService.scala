@@ -66,13 +66,13 @@ trait GatewayHttpService extends GatewayTargetDirectives
           }
         }
       } ~
-      path("login") {
-        post {
-          entity(as[LoginData]) { loginData =>
-            complete(authClient.login(loginData))
+        path("login") {
+          post {
+            entity(as[LoginData]) { loginData =>
+              complete(authClient.login(loginData))
+            }
           }
         }
-      }
     }
 }
 

@@ -2,22 +2,22 @@ package com.github.cupenya.gateway.integration
 
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import javax.net.ssl.{SSLContext, TrustManager, X509TrustManager}
+import javax.net.ssl.{ SSLContext, TrustManager, X509TrustManager }
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.{Http, HttpsConnectionContext}
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import akka.http.scaladsl.unmarshalling.{ Unmarshal, Unmarshaller }
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
-import com.github.cupenya.gateway.{Config, Logging}
+import akka.stream.scaladsl.{ Sink, Source }
+import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.postfixOps
 import scala.util.Try
 

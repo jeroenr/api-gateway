@@ -26,13 +26,13 @@ object Boot extends App
 
   log.info(s"Starting API gateway using gatewayInterface $gatewayInterface and port $gatewayPort")
 
-  Http().bindAndHandle(authRoute ~ gatewayRoute, gatewayInterface, gatewayPort).transform(
+  Http().bindAndHandle(authRoute ~ healthRoute ~ gatewayRoute, gatewayInterface, gatewayPort).transform(
     binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
   )
 
   log.info(s"Starting API gateway dashboard using gatewayInterface $dashboardInterface and port $dashboardPort")
 
-  Http().bindAndHandle(dashboardRoute ~ healthRoute, dashboardInterface, dashboardPort).transform(
+  Http().bindAndHandle(dashboardRoute, dashboardInterface, dashboardPort).transform(
     binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 

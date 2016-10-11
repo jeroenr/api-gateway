@@ -33,11 +33,11 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-            port: 8081
+            port: 8080
         livenessProbe:
           httpGet:
-            path: /health
-            port: 8081
+            path: /
+            port: 8080
         ports:
         - containerPort: 8080
         - containerPort: 8081

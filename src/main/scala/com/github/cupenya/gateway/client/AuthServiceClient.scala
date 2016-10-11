@@ -9,11 +9,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 import com.github.cupenya.gateway.Logging
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class AuthServiceClient(host: String, port: Int)(
     implicit
