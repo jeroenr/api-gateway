@@ -23,7 +23,7 @@ class AuthServiceClient(host: String, port: Int)(
   implicit val jwtFormat = jsonFormat1(JwtTokenResponse)
   implicit val loginDataFormat = jsonFormat2(LoginData)
 
-  private val client = Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
+  private lazy val client = Http(system).outgoingConnection(host, port, settings = ClientConnectionSettings(system))
 
   def getToken(headers: Seq[HttpHeader]): Future[Either[HttpResponse, JwtTokenResponse]] = {
     log.debug(s"Getting token with headers $headers")
@@ -49,10 +49,13 @@ class AuthServiceClient(host: String, port: Int)(
 
   def currentUser(headers: Seq[HttpHeader]): Future[HttpResponse] = {
     Source
-      .single(Get("auth/currentUser").withHeaders(headers: _*))
+      .single(Get("/auth/currentUser").withHeaders(headers: _*))
       .via(client)
       .runWith(Sink.head)
   }
+
+  def health: Future[HttpResponse] =
+    Source.single(Get("/health")).via(client).runWith(Sink.head)
 }
 
 case class JwtTokenResponse(jwt: String)

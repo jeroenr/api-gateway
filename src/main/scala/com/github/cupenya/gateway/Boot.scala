@@ -1,11 +1,12 @@
 package com.github.cupenya.gateway
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.github.cupenya.gateway.health.{ HealthCheck, HealthCheckRoute, HealthCheckService, ServiceDiscoveryHealthCheck }
+import com.github.cupenya.gateway.client.AuthServiceClient
+import com.github.cupenya.gateway.health._
 import com.github.cupenya.gateway.integration._
-import com.github.cupenya.gateway.server.{ ApiDashboardService, GatewayHttpService }
+import com.github.cupenya.gateway.server.{ApiDashboardService, GatewayHttpService}
 
 object Boot extends App
     with Logging
@@ -23,6 +24,11 @@ object Boot extends App
 
   private val dashboardInterface = Config.dashboard.interface
   private val dashboardPort = Config.dashboard.port
+
+  val authClient = new AuthServiceClient(
+    Config.integration.authentication.host,
+    Config.integration.authentication.port
+  )
 
   log.info(s"Starting API gateway using gateway interface $gatewayInterface and port $gatewayPort")
 
@@ -42,5 +48,5 @@ object Boot extends App
 
   serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 
-  override def checks: List[HealthCheck] = List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent))
+  override def checks: List[HealthCheck] = List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent), new AuthServiceHealthCheck(authClient))
 }

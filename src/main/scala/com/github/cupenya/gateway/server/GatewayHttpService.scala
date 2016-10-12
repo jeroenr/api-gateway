@@ -64,13 +64,10 @@ trait GatewayHttpService extends GatewayTargetDirectives
   val gatewayRoute: Route = (ctx: RequestContext) =>
     serviceRouteForResource(GatewayConfigurationManager.currentConfig(), Config.gateway.prefix)(_.route)(ctx)
 
-  private lazy val authClient = new AuthServiceClient(
-    Config.integration.authentication.host,
-    Config.integration.authentication.port
-  )
+  val authClient: AuthServiceClient
 
   val authRoute =
-    pathPrefix("auth") {
+    pathPrefix(Config.gateway.prefix / "auth") {
       path("currentUser") {
         get {
           extractRequest { req =>
