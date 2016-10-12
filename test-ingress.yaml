@@ -1,8 +1,0 @@
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: testgateway-ingress
-spec: 
-  backend:
-    serviceName: api-gateway-service
-    servicePort: 80

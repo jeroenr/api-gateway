@@ -5,33 +5,45 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
-import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
-import com.github.cupenya.gateway.{ Config, Logging }
+import com.github.cupenya.gateway.client.{AuthServiceClient, GatewayTargetClient, LoginData}
+import com.github.cupenya.gateway.configuration.{GatewayConfiguration, GatewayConfigurationManager}
+import com.github.cupenya.gateway.{Config, Logging}
 import spray.json.DefaultJsonProtocol
 
+import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
 
 trait GatewayTargetDirectives extends Directives {
-  def serviceRouteForResource(config: GatewayConfiguration): Directive[Tuple1[GatewayTargetClient]] =
-    pathPrefix(GatewayTargetPathMatcher(config)).flatMap(provide)
+  def serviceRouteForResource(config: GatewayConfiguration, prefix: String): Directive[Tuple1[GatewayTargetClient]] =
+    pathPrefix(GatewayTargetPathMatcher(config, prefix)).flatMap(provide)
 }
 
-case class GatewayTargetPathMatcher(config: GatewayConfiguration) extends PathMatcher1[GatewayTargetClient] {
+case class GatewayTargetPathMatcher(config: GatewayConfiguration, prefix: String) extends PathMatcher1[GatewayTargetClient] {
   import Path._
   import PathMatcher._
 
   def apply(path: Path): Matching[Tuple1[GatewayTargetClient]] =
     matchPathToGatewayTarget(path)
 
-  private def matchPathToGatewayTarget(path: Path) = {
-    path match {
-      case s @ Segment(head, _) =>
-        config.targets.get(head)
-          .map(gatewayTarget => Matched(s, Tuple1(gatewayTarget)))
-          .getOrElse(Unmatched)
-      case _ => Unmatched
-    }
+  @tailrec
+  private def matchPathToGatewayTarget(path: Path): Matching[Tuple1[GatewayTargetClient]] = path match {
+    case Empty => Unmatched
+    case Segment(apiPrefix, tail) if apiPrefix == prefix =>
+      matchRemainingPathToGatewayTarget(tail)
+    case Segment(head, tail) =>
+      matchPathToGatewayTarget(tail)
+    case Slash(tail) => matchPathToGatewayTarget(tail)
+  }
+
+  @tailrec
+  private def matchRemainingPathToGatewayTarget(path: Path): Matching[Tuple1[GatewayTargetClient]] = path match {
+    case Slash(tail) =>
+      matchRemainingPathToGatewayTarget(tail)
+    case s @ Segment(head, _) =>
+      config.targets.get(head)
+        .map(gatewayTarget => Matched(s, Tuple1(gatewayTarget)))
+        .getOrElse(Unmatched)
+    case _ => Unmatched
   }
 }
 
@@ -50,7 +62,7 @@ trait GatewayHttpService extends GatewayTargetDirectives
   implicit val loginDataFormat = jsonFormat2(LoginData)
 
   val gatewayRoute: Route = (ctx: RequestContext) =>
-    serviceRouteForResource(GatewayConfigurationManager.currentConfig())(_.route)(ctx)
+    serviceRouteForResource(GatewayConfigurationManager.currentConfig(), Config.gateway.prefix)(_.route)(ctx)
 
   private lazy val authClient = new AuthServiceClient(
     Config.integration.authentication.host,

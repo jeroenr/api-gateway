@@ -4,10 +4,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{ RequestContext, Route }
+import akka.http.scaladsl.server.{RequestContext, Route}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Sink, Source }
-import com.github.cupenya.gateway.{ Config, Logging }
+import akka.stream.scaladsl.{Sink, Source}
+import com.github.cupenya.gateway.{Config, Logging}
 
 import scala.concurrent.ExecutionContext
 
@@ -23,13 +23,14 @@ class GatewayTargetClient(val host: String, val port: Int, secured: Boolean)(
   )
 
   private val STANDARD_PORTS = List(80, 443)
+  private val API_PREFIX = Config.gateway.prefix
 
   val route = Route { context =>
     val request = context.request
     val originalHeaders = request.headers.toList
     val filteredHeaders = (hostHeader :: originalHeaders - Host).noEmptyHeaders
-    log.debug(s"Need token for request ${request.uri.path}")
     val eventualProxyResponse = if (secured) {
+      log.debug(s"Need token for request ${request.uri.path}")
       authClient.getToken(filteredHeaders).flatMap {
         case Right(tokenResponse) =>
           log.debug(s"Token ${tokenResponse.jwt}")
@@ -69,9 +70,9 @@ class GatewayTargetClient(val host: String, val port: Int, secured: Boolean)(
   private def createProxiedUri(ctx: RequestContext, originalUri: Uri): Uri = {
     val uri = originalUri
       .withHost(host)
-      .withPath(originalUri.path)
+      .withPath(originalUri.path.dropChars(API_PREFIX.length + 1))
       .withQuery(originalUri.query())
-    if (isStandardPort) uri else uri.withPort(port)
+    if (isStandardPort) uri.withPort(0) else uri.withPort(port)
   }
 
   private def isStandardPort =

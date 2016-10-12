@@ -11,6 +11,7 @@ object Config {
     private val config = rootConfig.getConfig("gateway")
     val interface = config.getString("interface")
     val port = config.getInt("port")
+    val prefix = config.getString("prefix")
   }
 
   object dashboard {

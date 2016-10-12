@@ -24,20 +24,20 @@ object Boot extends App
   private val dashboardInterface = Config.dashboard.interface
   private val dashboardPort = Config.dashboard.port
 
-  log.info(s"Starting API gateway using gatewayInterface $gatewayInterface and port $gatewayPort")
+  log.info(s"Starting API gateway using gateway interface $gatewayInterface and port $gatewayPort")
 
   Http().bindAndHandle(authRoute ~ healthRoute ~ gatewayRoute, gatewayInterface, gatewayPort).transform(
-    binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
+    binding => log.info(s"REST gateway interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway", t); sys.exit(1) }
   )
 
-  log.info(s"Starting API gateway dashboard using gatewayInterface $dashboardInterface and port $dashboardPort")
+  log.info(s"Starting API gateway dashboard using interface $dashboardInterface and port $dashboardPort")
 
   Http().bindAndHandle(dashboardRoute, dashboardInterface, dashboardPort).transform(
-    binding => log.info(s"REST gatewayInterface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
+    binding => log.info(s"REST gateway dashboard interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
   val serviceDiscoveryAgent =
-    //    system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
+//        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
     system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
 
   serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices

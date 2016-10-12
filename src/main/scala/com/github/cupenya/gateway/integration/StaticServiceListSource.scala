@@ -3,11 +3,11 @@ package com.github.cupenya.gateway.integration
 import scala.concurrent.Future
 
 class StaticServiceListSource extends ServiceDiscoverySource[StaticServiceUpdate] {
-  val DEFAULT_PORT = 9091
+  val DEFAULT_PORT = 80
 
   override def listServices: Future[List[StaticServiceUpdate]] =
     Future.successful(
-      List(StaticServiceUpdate(UpdateType.Addition, "health", "localhost", DEFAULT_PORT, secured = false))
+      List(StaticServiceUpdate(UpdateType.Addition, "hello", "micro.cupenya.com", DEFAULT_PORT, secured = false))
     )
 
   override def name: String = "static service list"
