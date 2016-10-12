@@ -47,6 +47,13 @@ class AuthServiceClient(host: String, port: Int)(
       .runWith(Sink.head)
   }
 
+  def logout: Future[HttpResponse] = {
+    Source
+      .single(Post("/auth/logout"))
+      .via(client)
+      .runWith(Sink.head)
+  }
+
   def currentUser(headers: Seq[HttpHeader]): Future[HttpResponse] = {
     Source
       .single(Get("/auth/currentUser").withHeaders(headers: _*))

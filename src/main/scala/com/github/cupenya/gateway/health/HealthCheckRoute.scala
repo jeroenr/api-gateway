@@ -27,14 +27,14 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
         complete(StatusCodes.OK, None)
       }
     } ~
-    path("health") {
-      get {
-        complete {
-          runChecks().map(statuses =>
-            statusCodeForStatuses(statuses) -> HealthCheckResults(statuses))
+      path("health") {
+        get {
+          complete {
+            runChecks().map(statuses =>
+              statusCodeForStatuses(statuses) -> HealthCheckResults(statuses))
+          }
         }
       }
-    }
 
   private def statusCodeForStatuses(statuses: List[HealthCheckResult]) =
     if (statuses.forall(_.status == HealthCheckStatus.Ok)) StatusCodes.OK else StatusCodes.InternalServerError

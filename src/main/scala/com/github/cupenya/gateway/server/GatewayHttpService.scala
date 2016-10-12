@@ -5,9 +5,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.{AuthServiceClient, GatewayTargetClient, LoginData}
-import com.github.cupenya.gateway.configuration.{GatewayConfiguration, GatewayConfigurationManager}
-import com.github.cupenya.gateway.{Config, Logging}
+import com.github.cupenya.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
+import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
+import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json.DefaultJsonProtocol
 
 import scala.annotation.tailrec
@@ -80,6 +80,11 @@ trait GatewayHttpService extends GatewayTargetDirectives
             entity(as[LoginData]) { loginData =>
               complete(authClient.login(loginData))
             }
+          }
+        } ~
+        path("logout") {
+          post {
+            complete(authClient.logout)
           }
         }
     }

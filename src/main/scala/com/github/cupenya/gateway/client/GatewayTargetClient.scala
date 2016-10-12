@@ -4,10 +4,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{RequestContext, Route}
+import akka.http.scaladsl.server.{ RequestContext, Route }
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
-import com.github.cupenya.gateway.{Config, Logging}
+import akka.stream.scaladsl.{ Sink, Source }
+import com.github.cupenya.gateway.{ Config, Logging }
 
 import scala.concurrent.ExecutionContext
 

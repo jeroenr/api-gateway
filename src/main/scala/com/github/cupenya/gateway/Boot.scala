@@ -1,12 +1,12 @@
 package com.github.cupenya.gateway
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.github.cupenya.gateway.client.AuthServiceClient
 import com.github.cupenya.gateway.health._
 import com.github.cupenya.gateway.integration._
-import com.github.cupenya.gateway.server.{ApiDashboardService, GatewayHttpService}
+import com.github.cupenya.gateway.server.{ ApiDashboardService, GatewayHttpService }
 
 object Boot extends App
     with Logging
@@ -43,7 +43,7 @@ object Boot extends App
   )
 
   val serviceDiscoveryAgent =
-//        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
+    //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
     system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
 
   serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
