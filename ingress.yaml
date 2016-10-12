@@ -7,6 +7,7 @@ spec:
   - host: micro.cupenya.com
     http:
       paths: 
-      - backend:
+      - path: /api
+        backend:
           serviceName: api-gateway-service
           servicePort: 80

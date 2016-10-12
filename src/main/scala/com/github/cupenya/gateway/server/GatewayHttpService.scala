@@ -18,7 +18,7 @@ trait GatewayTargetDirectives extends Directives {
     pathPrefix(GatewayTargetPathMatcher(config, prefix)).flatMap(provide)
 }
 
-case class GatewayTargetPathMatcher(config: GatewayConfiguration, prefix: String) extends PathMatcher1[GatewayTargetClient] {
+case class GatewayTargetPathMatcher(config: GatewayConfiguration, prefix: String) extends PathMatcher1[GatewayTargetClient] with Logging {
   import Path._
   import PathMatcher._
 
@@ -27,8 +27,11 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration, prefix: String
 
   @tailrec
   private def matchPathToGatewayTarget(path: Path): Matching[Tuple1[GatewayTargetClient]] = path match {
-    case Empty => Unmatched
+    case Empty =>
+      log.debug(s"No match found for path: $path")
+      Unmatched
     case Segment(apiPrefix, tail) if apiPrefix == prefix =>
+      log.debug(s"Match found for path: $tail")
       matchRemainingPathToGatewayTarget(tail)
     case Segment(head, tail) =>
       matchPathToGatewayTarget(tail)
