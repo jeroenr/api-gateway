@@ -32,11 +32,11 @@ spec:
           value: "80"
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/health
             port: 8080
         livenessProbe:
           httpGet:
-            path: /
+            path: /api
             port: 8080
         ports:
         - containerPort: 8080

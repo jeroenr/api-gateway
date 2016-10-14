@@ -5,7 +5,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.stream.Materializer
-import com.github.cupenya.gateway.Logging
+import com.github.cupenya.gateway.{ Config, Logging }
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
@@ -21,7 +21,7 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
 
   implicit val healthCheckResultsFormat = jsonFormat1(HealthCheckResults)
 
-  val healthRoute =
+  val healthRoute = pathPrefix(Config.gateway.prefix) {
     pathEndOrSingleSlash {
       get {
         complete(StatusCodes.OK, None)
@@ -35,6 +35,7 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
           }
         }
       }
+  }
 
   private def statusCodeForStatuses(statuses: List[HealthCheckResult]) =
     if (statuses.forall(_.status == HealthCheckStatus.Ok)) StatusCodes.OK else StatusCodes.InternalServerError
