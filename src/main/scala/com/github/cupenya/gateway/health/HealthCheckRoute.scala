@@ -21,7 +21,7 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
 
   implicit val healthCheckResultsFormat = jsonFormat1(HealthCheckResults)
 
-  val healthRoute = pathPrefix(Config.gateway.prefix) {
+  val healthRoute =
     pathEndOrSingleSlash {
       get {
         complete(StatusCodes.OK, None)
@@ -35,7 +35,6 @@ trait HealthCheckRoute extends Directives with DefaultJsonProtocol with SprayJso
           }
         }
       }
-  }
 
   private def statusCodeForStatuses(statuses: List[HealthCheckResult]) =
     if (statuses.forall(_.status == HealthCheckStatus.Ok)) StatusCodes.OK else StatusCodes.InternalServerError
