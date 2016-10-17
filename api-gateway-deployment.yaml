@@ -10,8 +10,6 @@ spec:
       labels:
         app: api-gateway
     spec:
-      nodeSelector:
-        "cloud.google.com/gke-nodepool": build-pool
       containers:
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
@@ -30,6 +28,8 @@ spec:
           value: "auth-service-service.default"
         - name: AUTH_PORT
           value: "80"
+        - name: GIT_REV
+          value: "GIT_REV_PLACEHOLDER"
         readinessProbe:
           httpGet:
             path: /health

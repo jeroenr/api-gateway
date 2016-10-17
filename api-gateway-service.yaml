@@ -16,4 +16,4 @@ spec:
     targetPort: 8081
   selector:
     app: api-gateway
-  type: NodePort
+  type: LoadBalancer
