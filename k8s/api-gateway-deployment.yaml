@@ -10,6 +10,8 @@ spec:
       labels:
         app: api-gateway
     spec:
+      imagePullSecrets:
+        - name: cpy-docker-test-registry
       containers:
       - name: api-gateway
         image: eu.gcr.io/cpy-docker-test/api-gateway
@@ -29,7 +31,7 @@ spec:
         - name: AUTH_PORT
           value: "80"
         - name: GIT_REV
-          value: "GIT_REV_PLACEHOLDER"
+          value: "1234"
         readinessProbe:
           httpGet:
             path: /health
