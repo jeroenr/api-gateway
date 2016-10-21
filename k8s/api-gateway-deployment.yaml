@@ -20,7 +20,7 @@ spec:
         - name: K8S_API_TOKEN
           valueFrom:
             secretKeyRef:
-              name: default-token-y6xrv
+              name: KUBERNETES_API_TOKEN_PLACEHOLDER
               key: token
         - name: K8S_API_HOST
           value: "kubernetes"
@@ -31,7 +31,7 @@ spec:
         - name: AUTH_PORT
           value: "80"
         - name: GIT_REV
-          value: "1234"
+          value: "GIT_REV_PLACEHOLDER"
         readinessProbe:
           httpGet:
             path: /health
