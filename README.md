@@ -6,3 +6,4 @@ Api Gateway [![Build Status](https://travis-ci.org/jeroenr/api-gateway.svg?branc
 * Get token from auth service and add to request header
 * Manage user permissions
 
+
