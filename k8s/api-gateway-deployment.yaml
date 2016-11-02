@@ -20,7 +20,7 @@ spec:
         - name: K8S_API_TOKEN
           valueFrom:
             secretKeyRef:
-              name: KUBERNETES_API_TOKEN_PLACEHOLDER
+              name: default-token-kfulv
               key: token
         - name: K8S_API_HOST
           value: "kubernetes"
