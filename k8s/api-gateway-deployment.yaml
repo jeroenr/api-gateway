@@ -14,7 +14,7 @@ spec:
         - name: cpy-docker-test-registry
       containers:
       - name: api-gateway
-        image: eu.gcr.io/cpy-docker-test/api-gateway
+        image: eu.gcr.io/cpy-docker-test/api-gateway:GIT_REV_PLACEHOLDER
         imagePullPolicy: Always
         env:
         - name: K8S_API_TOKEN
@@ -27,11 +27,9 @@ spec:
         - name: K8S_API_PORT
           value: "443"
         - name: AUTH_HOST
-          value: "auth-service-service.default"
+          value: "auth-service-service"
         - name: AUTH_PORT
           value: "80"
-        - name: GIT_REV
-          value: "GIT_REV_PLACEHOLDER"
         readinessProbe:
           httpGet:
             path: /health

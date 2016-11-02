@@ -20,7 +20,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaV,
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
-    "ch.qos.logback"    % "logback-classic"                    % logbackV,
+    "ch.qos.logback"    %  "logback-classic"                   % logbackV,
     "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test,
     "com.typesafe.akka" %% "akka-http-testkit"                 % akkaV            % Test
   )
@@ -29,9 +29,12 @@ libraryDependencies ++= {
 val branch = "git rev-parse --abbrev-ref HEAD" !!
 val cleanBranch = branch.toLowerCase.replaceAll(".*(cpy-[0-9]+).*", "$1").replaceAll("\\n", "").replaceAll("\\r", "")
 
+val shortCommit = ("git rev-parse --short HEAD" !!).replaceAll("\\n", "").replaceAll("\\r", "")
+
+
 lazy val dockerImageFromJava = Seq(
   packageName in Docker := "cpy-docker-test/" + name.value,
-  version in Docker     := "latest",
+  version in Docker     := shortCommit,
   dockerBaseImage       := "airdock/oracle-jdk:jdk-1.8",
   dockerRepository      := Some("eu.gcr.io"),
   defaultLinuxInstallLocation in Docker := s"/opt/${name.value}", // to have consistent directory for files
