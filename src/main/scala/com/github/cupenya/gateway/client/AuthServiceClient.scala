@@ -67,4 +67,4 @@ class AuthServiceClient(host: String, port: Int)(
 
 case class JwtTokenResponse(jwt: String)
 
-case class LoginData(user: String, password: String)
+case class LoginData(username: String, password: String)
