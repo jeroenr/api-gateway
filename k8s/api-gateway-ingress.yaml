@@ -4,7 +4,7 @@ metadata:
   name: gateway-ingress
 spec:
   rules:
-  - host: micro.cupenya.com
+  - host: dev.app.cupenya.com
     http:
       paths: 
       - path: /api/*
