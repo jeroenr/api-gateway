@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+spec:
+  rules:
+  - host: micro.cupenya.com
+    http:
+      paths: 
+      - path: /api/*
+        backend:
+          serviceName: api-gateway-svc
+          servicePort: 80
+      - path: /*
+        backend:
+          serviceName: cupenya-web-svc
+          servicePort: 80

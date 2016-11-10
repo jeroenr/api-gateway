@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx-cupenya-web
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-cupenya-web
+    spec:
+      containers:
+      - name: nginx-cupenya-web
+        image: eu.gcr.io/cpy-docker-test/nginx-cupenya-web
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cupenya-web-svc
+  labels:
+    app: cupenya-web-svc
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  type: NodePort
+  selector:
+    app: nginx-cupenya-web
