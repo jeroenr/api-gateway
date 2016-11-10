@@ -9,9 +9,9 @@ spec:
       paths: 
       - path: /api/*
         backend:
-          serviceName: api-gateway-svc
+          serviceName: api-gateway-service
           servicePort: 80
       - path: /*
         backend:
-          serviceName: cupenya-web-svc
+          serviceName: cupenya-web-service
           servicePort: 80
