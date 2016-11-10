@@ -10,10 +10,10 @@ spec:
     name: gateway-port
     protocol: TCP
     targetPort: 8080
-  - port: 8081
-    name: dashboard-port
-    protocol: TCP
-    targetPort: 8081
+#  - port: 8081
+#    name: dashboard-port
+#    protocol: TCP
+#    targetPort: 8081
   selector:
     app: api-gateway
   type: NodePort
