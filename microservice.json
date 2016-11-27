@@ -1,0 +1,50 @@
+{
+  "name": "api-gateway",
+  "ports": [
+    {
+      "port": 80,
+      "targetPort": 8080,
+      "protocol": "TCP"
+    },
+    {
+      "port": 8081,
+      "targetPort": 8081,
+      "protocol": "TCP"
+    }
+  ],
+  "servicePortType": "NodePort",
+  "deployment": {
+    "env": [
+      {
+        "isSecretKeyRef": true,
+        "name": "K8S_API_TOKEN",
+        "secretKeyRefName": "default-token-2tlsc",
+        "secretKeyRefKey": "token"
+      },
+      {
+        "name": "K8S_API_HOST",
+        "value": "kubernetes.default.svc.cluster.local"
+      },
+      {
+        "name": "K8S_API_PORT",
+        "value": "443"
+      },
+      {
+        "name": "AUTH_HOST",
+        "value": "auth-service-service"
+      },
+      {
+        "name": "AUTH_PORT",
+        "value": "80"
+      }
+    ],
+    "readinessProbe": {
+      "path": "/health",
+      "port": 8080
+    },
+    "livenessProbe": {
+      "path": "/",
+      "port": 8080
+    }
+  }
+}
