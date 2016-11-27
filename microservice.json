@@ -1,0 +1,23 @@
+{
+  "name": "api-gateway",
+  "ports": [
+    {
+      "port": 80,
+      "targetPort": 8080,
+      "protocol": "TCP"
+    }
+  ],
+  "servicePortType": "NodePort",
+  "deployment": {
+    "env": [
+    ],
+    "readinessProbe": {
+      "path": "/health",
+      "port": 8080
+    },
+    "livenessProbe": {
+      "path": "/",
+      "port": 8080
+    }
+  }
+}
