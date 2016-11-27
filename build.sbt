@@ -29,25 +29,24 @@ libraryDependencies ++= {
 val branch = "git rev-parse --abbrev-ref HEAD" !!
 val cleanBranch = branch.toLowerCase.replaceAll(".*(cpy-[0-9]+).*", "$1").replaceAll("\\n", "").replaceAll("\\r", "")
 
+// begin docker template settings
+enablePlugins(JavaServerAppPackaging)
+enablePlugins(DockerPlugin)
+
+publishArtifact in (Compile, packageDoc) := false
+
 val shortCommit = ("git rev-parse --short HEAD" !!).replaceAll("\\n", "").replaceAll("\\r", "")
 
 
-lazy val dockerImageFromJava = Seq(
-  packageName in Docker := "cpy-docker-test/" + name.value,
-  version in Docker     := shortCommit,
-  dockerBaseImage       := "airdock/oracle-jdk:jdk-1.8",
-  dockerRepository      := Some("eu.gcr.io"),
-  defaultLinuxInstallLocation in Docker := s"/opt/${name.value}", // to have consistent directory for files
-  dockerCommands ++= Seq(
-    Cmd("EXPOSE", "8080", "8081"),
-    Cmd("LABEL", "name=api-gateway")
-  )
-)
+packageName in Docker := "cpy-docker-test/" + name.value
+version in Docker     := shortCommit
+dockerBaseImage       := "airdock/oracle-jdk:jdk-1.8"
+defaultLinuxInstallLocation in Docker := s"/opt/${name.value}" // to have consistent directory for files
+dockerRepository := Some("eu.gcr.io")
+// end docker template settings
 
-lazy val root = project.in(file(".")).settings(dockerImageFromJava)
 
 Revolver.settings
-enablePlugins(DockerPlugin, JavaAppPackaging)
 
 initialCommands := """|import akka.actor._
                       |import akka.pattern._
