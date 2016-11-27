@@ -10,28 +10,6 @@
   "servicePortType": "NodePort",
   "deployment": {
     "env": [
-      {
-        "isSecretKeyRef": true,
-        "name": "K8S_API_TOKEN",
-        "secretKeyRefName": "default-token-2tlsc",
-        "secretKeyRefKey": "token"
-      },
-      {
-        "name": "K8S_API_HOST",
-        "value": "kubernetes.default.svc.cluster.local"
-      },
-      {
-        "name": "K8S_API_PORT",
-        "value": "443"
-      },
-      {
-        "name": "AUTH_HOST",
-        "value": "auth-service-service"
-      },
-      {
-        "name": "AUTH_PORT",
-        "value": "80"
-      }
     ],
     "readinessProbe": {
       "path": "/health",
