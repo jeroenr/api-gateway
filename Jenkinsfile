@@ -1,3 +1,3 @@
 import k8s.microservice
 
-new microservice().build('api-gateway')
+new microservice().pipelineSbt('api-gateway')
