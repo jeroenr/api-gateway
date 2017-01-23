@@ -3,6 +3,7 @@ package com.github.cupenya.gateway
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.ConfigFactory
+import scala.collection.JavaConversions._
 
 object Config {
   private val rootConfig = ConfigFactory.load()
@@ -34,6 +35,7 @@ object Config {
       val host = k8sConfig.getString("host")
       val port = k8sConfig.getInt("port")
       val token = k8sConfig.getString("token")
+      val namespaces = k8sConfig.getStringList("namespaces").toList
     }
 
     object polling {

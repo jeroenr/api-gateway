@@ -55,7 +55,10 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
 
   override def receive: Receive = bootstrapping
 
-  private def handleServiceUpdates(serviceUpdates: List[T]) = {
+  private def handleServiceUpdates(allServiceUpdates: List[T]) = {
+    val serviceUpdates = allServiceUpdates.filter { upd =>
+      Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
+    }
     val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
     val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
     log.debug(s"Deleting $toDelete")

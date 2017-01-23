@@ -25,6 +25,7 @@ trait ServiceUpdate extends DiscoverableAddress {
   def resource: String
   def secured: Boolean
   def port: Int
+  def namespace: String
 }
 
 trait ServiceDiscoverySource[T <: ServiceUpdate] extends Logging {
