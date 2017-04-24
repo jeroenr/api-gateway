@@ -64,6 +64,7 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
     log.debug(s"Deleting $toDelete")
     toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
 
+    // TODO: handle config updates
     val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
     log.debug(s"New services $newResources")
     newResources.foreach(serviceUpdate => {
