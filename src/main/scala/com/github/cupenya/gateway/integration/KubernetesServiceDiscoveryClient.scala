@@ -83,7 +83,7 @@ class KubernetesServiceDiscoveryClient()(implicit system: ActorSystem, ec: Execu
 
 trait KubernetesServiceUpdateParser extends DefaultJsonProtocol with Logging {
 
-  case class PortMapping(protocol: String, port: Int, targetPort: Int, nodePort: Option[Int])
+  case class PortMapping(protocol: String, port: Int, targetPort: Either[Int, String], nodePort: Option[Int])
 
   case class Spec(ports: List[PortMapping])
 
