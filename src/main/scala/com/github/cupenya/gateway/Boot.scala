@@ -1,13 +1,15 @@
 package com.github.cupenya.gateway
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.stream.ActorMaterializer
 import com.github.cupenya.gateway.client.AuthServiceClient
 import com.github.cupenya.gateway.health._
 import com.github.cupenya.gateway.integration._
-import com.github.cupenya.gateway.server.{ApiDashboardService, CorsRoute, GatewayHttpService}
+import com.github.cupenya.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
+import com.github.cupenya.gateway.configuration._
+import com.github.cupenya.gateway.model._
 
 object Boot extends App
     with Logging
@@ -57,9 +59,29 @@ object Boot extends App
     binding => log.info(s"REST gateway dashboard interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
+  private def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
+    val serviceUpdates = allServiceUpdates.filter { upd =>
+      Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
+    }
+    val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
+    val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
+    log.debug(s"Deleting $toDelete")
+    toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
+
+    // TODO: handle config updates
+    val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
+    log.debug(s"New services $newResources")
+    newResources.foreach(serviceUpdate => {
+      val gatewayTarget =
+        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
+      log.info(s"Registering new gateway target $gatewayTarget")
+      GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
+    })
+  }
+
   val serviceDiscoveryAgent =
     //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
-    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient)))
+    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient, handleServiceUpdates)))
 
   serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 

@@ -2,9 +2,7 @@ package com.github.cupenya.gateway.integration
 
 import akka.actor.{ Actor, ActorRef, ActorSystem }
 import akka.stream.Materializer
-import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
 import com.github.cupenya.gateway.health.ServiceDiscoveryHealthCheck
-import com.github.cupenya.gateway.model.GatewayTarget
 import com.github.cupenya.gateway.{ Config, Logging }
 
 import scala.concurrent.ExecutionContext
@@ -12,7 +10,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{ Failure, Success }
 
-class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T])(
+class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceDiscoverySource[T], handleServiceUpdates: (List[T]) => Any)(
     implicit
     materializer: Materializer
 ) extends Actor with Logging {
@@ -57,26 +55,6 @@ class ServiceDiscoveryAgent[T <: ServiceUpdate](serviceDiscoverySource: ServiceD
   }
 
   override def receive: Receive = bootstrapping
-
-  private def handleServiceUpdates(allServiceUpdates: List[T]) = {
-    val serviceUpdates = allServiceUpdates.filter { upd =>
-      Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
-    }
-    val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
-    val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
-    log.debug(s"Deleting $toDelete")
-    toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
-
-    // TODO: handle config updates
-    val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
-    log.debug(s"New services $newResources")
-    newResources.foreach(serviceUpdate => {
-      val gatewayTarget =
-        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
-      log.info(s"Registering new gateway target $gatewayTarget")
-      GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
-    })
-  }
 }
 
 object ServiceDiscoveryAgent {
