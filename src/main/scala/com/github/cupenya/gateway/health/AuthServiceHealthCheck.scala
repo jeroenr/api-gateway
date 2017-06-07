@@ -3,6 +3,7 @@ package com.github.cupenya.gateway.health
 import akka.http.scaladsl.model.DateTime
 import com.github.cupenya.gateway.Logging
 import com.github.cupenya.gateway.client.AuthServiceClient
+import com.github.cupenya.service.discovery.health._
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._

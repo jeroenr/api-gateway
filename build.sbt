@@ -6,7 +6,10 @@ organization  := "com.github.cupenya"
 scalaVersion  := "2.11.8"
 scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8")
 
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
 resolvers += Resolver.jcenterRepo
+resolvers += "Cupenya Nexus" at "https://test.cupenya.com/nexus/content/groups/public"
 
 libraryDependencies ++= {
   val akkaV            = "2.4.10"
@@ -21,6 +24,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
     "ch.qos.logback"    %  "logback-classic"                   % logbackV,
+    "com.github.cupenya" %% "k8s-svc-discovery"                % "0.1-SNAPSHOT",
     "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test,
     "com.typesafe.akka" %% "akka-http-testkit"                 % akkaV            % Test
   )

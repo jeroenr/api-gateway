@@ -51,7 +51,6 @@ case class GatewayTargetPathMatcher(config: GatewayConfiguration, prefix: String
 }
 
 trait GatewayHttpService extends GatewayTargetDirectives
-    with Logging
     with SprayJsonSupport
     with DefaultJsonProtocol
     with Directives {

@@ -37,10 +37,5 @@ object Config {
       val token = k8sConfig.getString("token")
       val namespaces = k8sConfig.getStringList("namespaces").toList
     }
-
-    object polling {
-      private val reconnectConfig = config.getConfig("polling")
-      val interval = reconnectConfig.getDuration("interval", TimeUnit.SECONDS)
-    }
   }
 }
