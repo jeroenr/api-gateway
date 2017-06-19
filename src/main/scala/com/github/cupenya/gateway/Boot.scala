@@ -6,8 +6,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.stream.ActorMaterializer
 import com.github.cupenya.gateway.client.AuthServiceClient
 import com.github.cupenya.gateway.health._
-import com.github.cupenya.service.discovery._
-import com.github.cupenya.service.discovery.health._
+import com.github.jeroenr.service.discovery._
+import com.github.jeroenr.service.discovery.health._
 import com.github.cupenya.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
 import com.github.cupenya.gateway.configuration._
 import com.github.cupenya.gateway.model._
