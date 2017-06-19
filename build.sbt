@@ -23,7 +23,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
     "ch.qos.logback"    %  "logback-classic"                   % logbackV,
-    "com.github.cupenya" %% "k8s-svc-discovery"                % "0.6",
+    "com.github.jeroenr" %% "k8s-svc-discovery"                % "0.6",
     "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test
   )
 }
