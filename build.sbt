@@ -9,7 +9,6 @@ scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 resolvers += Resolver.jcenterRepo
-resolvers += "Cupenya Nexus" at "https://test.cupenya.com/nexus/content/groups/public"
 
 libraryDependencies ++= {
   val akkaV            = "2.4.17"
@@ -24,7 +23,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
     "ch.qos.logback"    %  "logback-classic"                   % logbackV,
-    "com.github.cupenya" %% "k8s-svc-discovery"                % "0.1-SNAPSHOT",
+    "com.github.cupenya" %% "k8s-svc-discovery"                % "0.6",
     "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test
   )
 }
@@ -36,7 +35,6 @@ val cleanBranch = branch.toLowerCase.replaceAll(".*(cpy-[0-9]+).*", "$1").replac
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerPlugin)
 
-publishArtifact in (Compile, packageDoc) := false
 
 val shortCommit = ("git rev-parse --short HEAD" !!).replaceAll("\\n", "").replaceAll("\\r", "")
 
