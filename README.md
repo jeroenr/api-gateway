@@ -9,7 +9,7 @@ The Api Gateway is the entry point of a microservice infrastructure (see [api ga
 ```bash 
 $ sbt run
 ```
-By default this will start the gateway interface on http://localhost:8080 and the management interface on http://localhost:8081
+By default this will start the gateway interface on ```http://localhost:8080/api``` and the management interface on ```http://localhost:8081```
 
 ## Building a docker image
 This project is using the [Docker plugin of the Sbt Native Packager](http://www.scala-sbt.org/sbt-native-packager/formats/docker.html) to generate a docker image using:
@@ -40,13 +40,28 @@ metadata:
 secrets:
 - name: my-service-account-token-1yvwg
 ```
-As you can see in our example the generated secret is called "my-service-account-token-1yvwg". Now we can setup our K8s deployment and service descriptor. Here's an [example config](https://github.com/jeroenr/api-gateway/blob/master/k8s-descriptor.yaml). 
+As you can see in our example the generated secret is called "my-service-account-token-1yvwg". Depending on where you pull your docker image from you might also need to create another secret with credentials for the docker registry to be used as an image pull secret. 
+
+Now we can setup our K8s deployment and service descriptor. Here's an [example config](https://github.com/jeroenr/api-gateway/blob/master/k8s-descriptor.yaml). Important to configure is:
+* The container image path (e.g. eu.gcr.io/my-docker-registry/api-gateway)
+* The image pull secret for the container registry (e.g. my-docker-registry-secret)
+* The secretKeyRef.name for the ```K8S_API_TOKEN``` env variable (e.g. my-service-account-token-1yvwg)
+* The AUTH_HOST and AUTH_PORT env variables to point to your backing authentication service
+
+As a final step we can now create the k8s deployment and service: 
+```bash
+$ kubectl apply -f k8s-descriptor.yaml
+deployment "api-gateway" created
+service "api-gateway-svc" created
+```
+Cool, now we're running the Api gateway in Kubernetes!
 
 ## Deploying on other platforms
 Currently the Api gateway relies on the services endpoint from the Kubernetes API to poll for service updates (see [Automatic Service discovery section](#automatic-service-discovery)). If you want to deploy the Api gateway on a different platform you would have to:
 * Mock this endpoint and manually update the service registry (see (#manually-updating-the-service-registry). You could also rely on something like Consul and write a sync script.  
 * Make a PR to add a flag in the configuration to disable automatic service discovery
 * Make a PR to support different pluggable service discovery modules
+* The k8s namespaces to watch for service updates. This can be configured through JVM params (e.g. ```-Dintegration.kubernetes.namespaces.0=my-env``` to only handle service updates on the 'my-env' namespace)
 
 ## Features
 
@@ -69,7 +84,7 @@ This call is just forwarded to the authentication service.
 Here's a [Postman collection with all available Api calls](https://www.getpostman.com/collections/9b269b9f26bf0a3ce255)
 
 ### Automatic Service discovery
-The Api gateway supports service discovery through the Kubernetes API using the [k8s-svc-discovery module](https://github.com/jeroenr/k8s-svc-discovery). It's polling the /api/v1/services endpoint for service and updates the routing / mapping based on the service metadata.
+The Api gateway supports service discovery through the Kubernetes API using the [k8s-svc-discovery module](https://github.com/jeroenr/k8s-svc-discovery). It's polling the ```/api/v1/services``` endpoint for service and updates the routing / mapping based on the service metadata.
 
 ### Manually updating the service registry
 There's also a dashboard Api which can be used to manually update the service registry. For instance to add a service:
