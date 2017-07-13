@@ -43,7 +43,7 @@ spec:
         - name: K8S_API_TOKEN
           valueFrom:
             secretKeyRef:
-              name: KUBERNETES_DEFAULT_TOKEN_PLACEHOLDER
+              name: my-serviceaccount-token-secret
               key: token
         - name: K8S_API_HOST
           value: "kubernetes.default.svc.cluster.local"
