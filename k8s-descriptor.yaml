@@ -18,7 +18,7 @@ spec:
       imagePullSecrets:
         - name: my-docker-registry-secret
       containers:
-      - name:
+      - name: api-gateway
         image: eu.gcr.io/my-docker-registry/api-gateway
         imagePullPolicy: Always
         ports:
