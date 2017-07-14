@@ -2,6 +2,14 @@ Api Gateway [![Build Status](https://travis-ci.org/jeroenr/api-gateway.svg?branc
 =========================
 The Api Gateway is the entry point of a microservice infrastructure (see [api gateway pattern](http://microservices.io/patterns/apigateway.html)). The main problem it solves is "How do the clients of a Microservices-based application access the individual services?". It handles the first layer of authentication and routes the incoming requests (like a reverse proxy) to the corresponding service, based on the mapping in its service registry.
 
+## Contributions
+This is a young but very active project and absolutely needs your help. Good ways to contribute include:
+
+* Raising bugs and feature requests
+* Fixing bugs
+* Improving the performance
+* Adding to the documentation
+
 ## Requirements
 - Sbt 0.13.*
 
