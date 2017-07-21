@@ -1,8 +1,8 @@
-package com.github.cupenya.gateway.health
+package com.github.jeroenr.gateway.health
 
 import akka.http.scaladsl.model.DateTime
-import com.github.cupenya.gateway.Logging
-import com.github.cupenya.gateway.client.AuthServiceClient
+import com.github.jeroenr.gateway.Logging
+import com.github.jeroenr.gateway.client.AuthServiceClient
 import com.github.jeroenr.service.discovery.health._
 
 import scala.concurrent.{ ExecutionContext, Future }

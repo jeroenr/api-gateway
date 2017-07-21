@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway.client
+package com.github.jeroenr.gateway.client
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -10,7 +10,7 @@ import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Sink, Source }
-import com.github.cupenya.gateway.Logging
+import com.github.jeroenr.gateway.Logging
 import spray.json._
 
 import scala.concurrent.{ ExecutionContext, Future }

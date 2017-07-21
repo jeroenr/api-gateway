@@ -1,11 +1,11 @@
-package com.github.cupenya.gateway.configuration
+package com.github.jeroenr.gateway.configuration
 
 import java.util.concurrent.atomic.AtomicReference
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.GatewayTargetClient
-import com.github.cupenya.gateway.model.GatewayTarget
+import com.github.jeroenr.gateway.client.GatewayTargetClient
+import com.github.jeroenr.gateway.model.GatewayTarget
 
 import scala.concurrent.ExecutionContext
 
@@ -26,7 +26,4 @@ object GatewayConfigurationManager {
     val current = configHolder.get()
     configHolder.lazySet(current.copy(current.targets - resource))
   }
-
-  def setConfig(config: GatewayConfiguration): Unit =
-    configHolder.lazySet(config)
 }

@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway.server
+package com.github.jeroenr.gateway.server
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -6,8 +6,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.github.cupenya.gateway.configuration.GatewayConfigurationManager
-import com.github.cupenya.gateway.model.GatewayTarget
+import com.github.jeroenr.gateway.configuration.GatewayConfigurationManager
+import com.github.jeroenr.gateway.model.GatewayTarget
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext

@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway
+package com.github.jeroenr.gateway
 
 import java.util.concurrent.TimeUnit
 

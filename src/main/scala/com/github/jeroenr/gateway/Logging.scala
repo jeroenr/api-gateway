@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway
+package com.github.jeroenr.gateway
 
 import org.slf4s.{ Logging => SLF4SLogging }
 

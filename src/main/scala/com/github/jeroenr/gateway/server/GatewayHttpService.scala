@@ -1,13 +1,13 @@
-package com.github.cupenya.gateway.server
+package com.github.jeroenr.gateway.server
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
-import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
-import com.github.cupenya.gateway.{ Config, Logging }
+import com.github.jeroenr.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
+import com.github.jeroenr.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
+import com.github.jeroenr.gateway.{ Config, Logging }
 import spray.json.DefaultJsonProtocol
 
 import scala.annotation.tailrec
