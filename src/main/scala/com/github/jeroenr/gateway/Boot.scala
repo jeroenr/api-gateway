@@ -11,6 +11,9 @@ import com.github.jeroenr.service.discovery.health._
 import com.github.jeroenr.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
 import com.github.jeroenr.gateway.configuration._
 import com.github.jeroenr.gateway.model._
+import akka.pattern._
+import akka.util.Timeout
+import scala.language.postfixOps
 
 object Boot extends App
     with GatewayHttpService
@@ -22,6 +25,7 @@ object Boot extends App
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
+  implicit val timeout = Timeout(Config.DEFAULT_TIMEOUT)
 
   private val gatewayInterface = Config.gateway.interface
   private val gatewayPort = Config.gateway.port
@@ -59,24 +63,29 @@ object Boot extends App
     binding => log.info(s"REST gateway dashboard interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
+  val gatewayConfigurationManager = system.actorOf(Props(new GatewayConfigurationManagerActor))
+
   private def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
     val serviceUpdates = allServiceUpdates.filter { upd =>
       Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
     }
-    val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
-    val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
-    log.debug(s"Deleting $toDelete")
-    toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
+    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration].map { currentConfig =>
+      val currentResources = currentConfig.targets.keys.toList
+      val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
+      log.debug(s"Deleting $toDelete")
+      toDelete.foreach(gatewayConfigurationManager ! GatewayConfigurationManagerActor.DeleteGatewayTarget(_))
 
-    // TODO: handle config updates
-    val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
-    log.debug(s"New services $newResources")
-    newResources.foreach(serviceUpdate => {
-      val gatewayTarget =
-        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
-      log.info(s"Registering new gateway target $gatewayTarget")
-      GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
-    })
+      // TODO: handle config updates
+      val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
+      log.debug(s"New services $newResources")
+      newResources.foreach(serviceUpdate => {
+        val gatewayTarget =
+          GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
+        log.info(s"Registering new gateway target $gatewayTarget")
+        gatewayConfigurationManager ! GatewayConfigurationManagerActor.UpsertGatewayTarget(gatewayTarget)
+      })
+    }
+
   }
 
   val serviceDiscoveryAgent =

@@ -26,10 +26,14 @@ class GatewayConfigurationManagerActor()(implicit mat: Materializer) extends Act
       )
     case DeleteGatewayTarget(resource: String) =>
       gatewayConfiguration = gatewayConfiguration.copy(gatewayConfiguration.targets - resource)
+
+    case GetGatewayConfig =>
+      sender() ! gatewayConfiguration
   }
 }
 
 object GatewayConfigurationManagerActor {
   case class UpsertGatewayTarget(target: GatewayTarget)
   case class DeleteGatewayTarget(resource: String)
+  case object GetGatewayConfig
 }

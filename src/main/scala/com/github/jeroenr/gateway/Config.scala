@@ -1,12 +1,13 @@
 package com.github.jeroenr.gateway
 
-import java.util.concurrent.TimeUnit
+import scala.concurrent.duration._
 
 import com.typesafe.config.ConfigFactory
 import scala.collection.JavaConversions._
 
 object Config {
   private val rootConfig = ConfigFactory.load()
+  val DEFAULT_TIMEOUT = 10 seconds
 
   object gateway {
     private val config = rootConfig.getConfig("gateway")

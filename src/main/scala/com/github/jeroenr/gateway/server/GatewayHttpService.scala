@@ -1,14 +1,16 @@
 package com.github.jeroenr.gateway.server
 
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
 import com.github.jeroenr.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
-import com.github.jeroenr.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
+import com.github.jeroenr.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManagerActor }
 import com.github.jeroenr.gateway.{ Config, Logging }
 import spray.json.DefaultJsonProtocol
+import akka.pattern._
+import akka.util.Timeout
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
@@ -63,8 +65,14 @@ trait GatewayHttpService extends GatewayTargetDirectives
 
   implicit val loginDataFormat = jsonFormat2(LoginData)
 
+  implicit val timeout: Timeout
+
+  val gatewayConfigurationManager: ActorRef
+
   val gatewayRoute: Route = (ctx: RequestContext) =>
-    serviceRouteForResource(GatewayConfigurationManager.currentConfig(), Config.gateway.prefix)(_.route)(ctx)
+    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration].flatMap { currentConfig =>
+      serviceRouteForResource(currentConfig, Config.gateway.prefix)(_.route)(ctx)
+    }
 
   val authClient: AuthServiceClient
 
