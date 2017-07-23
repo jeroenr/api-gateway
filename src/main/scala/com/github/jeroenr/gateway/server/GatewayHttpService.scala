@@ -13,7 +13,7 @@ import akka.pattern._
 import akka.util.Timeout
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait GatewayTargetDirectives extends Directives {
   def serviceRouteForResource(config: GatewayConfiguration, prefix: String): Directive[Tuple1[GatewayTargetClient]] =
@@ -70,9 +70,14 @@ trait GatewayHttpService extends GatewayTargetDirectives
   val gatewayConfigurationManager: ActorRef
 
   val gatewayRoute: Route = (ctx: RequestContext) =>
-    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration].flatMap { currentConfig =>
+    currentConfig.flatMap { currentConfig =>
+      println(s"CURRENT $currentConfig")
       serviceRouteForResource(currentConfig, Config.gateway.prefix)(_.route)(ctx)
     }
+
+  protected def currentConfig: Future[GatewayConfiguration] = {
+    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration]
+  }
 
   val authClient: AuthServiceClient
 

@@ -22,17 +22,24 @@ class GatewayConfigurationManagerActor()(implicit mat: Materializer) extends Act
   override def receive: Receive = {
     case UpsertGatewayTarget(target: GatewayTarget) =>
       gatewayConfiguration = gatewayConfiguration.copy(
-        gatewayConfiguration.targets.updated(target.resource, new GatewayTargetClient(target.address, target.port, target.secured))
+        gatewayConfiguration.targets.updated(target.resource, gatewayTargetClient(target))
       )
     case DeleteGatewayTarget(resource: String) =>
       gatewayConfiguration = gatewayConfiguration.copy(gatewayConfiguration.targets - resource)
 
+    case SetGatewayTargets(targets) =>
+      gatewayConfiguration = GatewayConfiguration(targets.map(target =>
+        target.resource -> gatewayTargetClient(target)).toMap)
     case GetGatewayConfig =>
       sender() ! gatewayConfiguration
   }
+
+  private def gatewayTargetClient(target: GatewayTarget) =
+    GatewayTargetClient(target.address, target.port, target.secured)
 }
 
 object GatewayConfigurationManagerActor {
+  case class SetGatewayTargets(targets: List[GatewayTarget])
   case class UpsertGatewayTarget(target: GatewayTarget)
   case class DeleteGatewayTarget(resource: String)
   case object GetGatewayConfig

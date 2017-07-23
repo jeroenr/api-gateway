@@ -11,7 +11,6 @@ import com.github.jeroenr.service.discovery.health._
 import com.github.jeroenr.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
 import com.github.jeroenr.gateway.configuration._
 import com.github.jeroenr.gateway.model._
-import akka.pattern._
 import akka.util.Timeout
 import scala.language.postfixOps
 
@@ -65,34 +64,25 @@ object Boot extends App
 
   val gatewayConfigurationManager = system.actorOf(Props(new GatewayConfigurationManagerActor))
 
-  private def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
-    val serviceUpdates = allServiceUpdates.filter { upd =>
-      Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
-    }
-    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration].map { currentConfig =>
-      val currentResources = currentConfig.targets.keys.toList
-      val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
-      log.debug(s"Deleting $toDelete")
-      toDelete.foreach(gatewayConfigurationManager ! GatewayConfigurationManagerActor.DeleteGatewayTarget(_))
-
-      // TODO: handle config updates
-      val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
-      log.debug(s"New services $newResources")
-      newResources.foreach(serviceUpdate => {
-        val gatewayTarget =
-          GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
-        log.info(s"Registering new gateway target $gatewayTarget")
-        gatewayConfigurationManager ! GatewayConfigurationManagerActor.UpsertGatewayTarget(gatewayTarget)
-      })
+  val serviceDiscoveryHealthChecks = if (Config.integration.polling.enabled) {
+    def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
+      val serviceUpdates = allServiceUpdates.filter { upd =>
+        Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
+      }
+      log.debug(s"Updating services $serviceUpdates")
+      gatewayConfigurationManager ! GatewayConfigurationManagerActor.SetGatewayTargets(serviceUpdates.map(serviceUpdate =>
+        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)))
     }
 
-  }
+    val serviceDiscoveryAgent =
+      //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
+      system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient, handleServiceUpdates)))
 
-  val serviceDiscoveryAgent =
-    //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
-    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient, handleServiceUpdates)))
+    serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 
-  serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
+    List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent))
+  } else Nil
 
-  override def checks: List[HealthCheck] = List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent), new AuthServiceHealthCheck(authClient))
+  override def checks: List[HealthCheck] =
+    serviceDiscoveryHealthChecks ++ List(new AuthServiceHealthCheck(authClient))
 }

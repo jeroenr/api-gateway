@@ -11,7 +11,7 @@ import com.github.jeroenr.gateway.{ Config, Logging }
 
 import scala.concurrent.ExecutionContext
 
-class GatewayTargetClient(val host: String, val port: Int, secured: Boolean)(
+case class GatewayTargetClient(host: String, port: Int, secured: Boolean)(
     implicit
     val system: ActorSystem, ec: ExecutionContext, materializer: Materializer
 ) extends Logging {
