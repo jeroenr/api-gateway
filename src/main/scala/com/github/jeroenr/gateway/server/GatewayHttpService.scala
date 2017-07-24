@@ -71,7 +71,6 @@ trait GatewayHttpService extends GatewayTargetDirectives
 
   val gatewayRoute: Route = (ctx: RequestContext) =>
     currentConfig.flatMap { currentConfig =>
-      println(s"CURRENT $currentConfig")
       serviceRouteForResource(currentConfig, Config.gateway.prefix)(_.route)(ctx)
     }
 
