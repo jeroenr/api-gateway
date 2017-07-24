@@ -19,6 +19,11 @@ $ sbt run
 ```
 By default this will start the gateway interface on ```http://localhost:8080/api``` and the management interface on ```http://localhost:8081```
 
+## Pulling the docker image
+```
+$ docker pull jeroenrosenberg/api-gateway
+```
+
 ## Building a docker image
 This project is using the [Docker plugin of the Sbt Native Packager](http://www.scala-sbt.org/sbt-native-packager/formats/docker.html) to generate a docker image using:
 ```bash
