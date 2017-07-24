@@ -19,6 +19,17 @@ $ sbt run
 ```
 By default this will start the gateway interface on ```http://localhost:8080/api``` and the management interface on ```http://localhost:8081```
 
+## Configuration
+Most of the configurable options are available as environment variables. Below is a list with default values:
+* ```API_PREFIX=api```
+* ```AUTH_HOST=localhost```
+* ```AUTH_PORT=7070```
+* ```K8S_API_HOST=localhost```
+* ```K8S_API_PORT=8001```
+* ```K8S_API_TOKEN=123456```
+
+For a Kubernetes configuration example see the [sample descriptor file](https://github.com/jeroenr/api-gateway/blob/master/k8s-descriptor.yaml).
+
 ## Pulling the docker image
 ```
 $ docker pull jeroenrosenberg/api-gateway
