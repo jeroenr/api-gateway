@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway.server
+package com.github.jeroenr.gateway.server
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.HttpMethods._
@@ -37,7 +37,7 @@ trait CorsDirectives { this: Directives =>
     "X-File-Name",
     "Cache-Control",
     "x-api-key",
-    "x-auth-cupenya",
+    "x-auth-jeroenr",
     "x-api-version",
     "x-cpy-trace-token"
   )

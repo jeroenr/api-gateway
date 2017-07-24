@@ -1,17 +1,19 @@
-package com.github.cupenya.gateway.server
+package com.github.jeroenr.gateway.server
 
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import com.github.cupenya.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
-import com.github.cupenya.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManager }
-import com.github.cupenya.gateway.{ Config, Logging }
+import com.github.jeroenr.gateway.client.{ AuthServiceClient, GatewayTargetClient, LoginData }
+import com.github.jeroenr.gateway.configuration.{ GatewayConfiguration, GatewayConfigurationManagerActor }
+import com.github.jeroenr.gateway.{ Config, Logging }
 import spray.json.DefaultJsonProtocol
+import akka.pattern._
+import akka.util.Timeout
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait GatewayTargetDirectives extends Directives {
   def serviceRouteForResource(config: GatewayConfiguration, prefix: String): Directive[Tuple1[GatewayTargetClient]] =
@@ -63,8 +65,19 @@ trait GatewayHttpService extends GatewayTargetDirectives
 
   implicit val loginDataFormat = jsonFormat2(LoginData)
 
+  implicit val timeout: Timeout
+
+  val gatewayConfigurationManager: ActorRef
+
   val gatewayRoute: Route = (ctx: RequestContext) =>
-    serviceRouteForResource(GatewayConfigurationManager.currentConfig(), Config.gateway.prefix)(_.route)(ctx)
+    currentConfig.flatMap { currentConfig =>
+      println(s"CURRENT $currentConfig")
+      serviceRouteForResource(currentConfig, Config.gateway.prefix)(_.route)(ctx)
+    }
+
+  protected def currentConfig: Future[GatewayConfiguration] = {
+    (gatewayConfigurationManager ? GatewayConfigurationManagerActor.GetGatewayConfig).mapTo[GatewayConfiguration]
+  }
 
   val authClient: AuthServiceClient
 

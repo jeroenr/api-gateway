@@ -1,4 +1,4 @@
-package com.github.cupenya.gateway
+package com.github.jeroenr.gateway
 
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.{ ModeledCompanion, `Remote-Address` }

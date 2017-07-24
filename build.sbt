@@ -14,17 +14,21 @@ libraryDependencies ++= {
   val akkaV            = "2.4.17"
   val akkaHttpV	       = "10.0.7"
   val ficusV           = "1.2.4"
-  val scalaTestV       = "3.0.0-M15"
   val slf4sV           = "1.7.10"
   val logbackV         = "1.1.3"
+  val k8sSvcDiscoveryV = "0.6"
+  val specs2V          = "3.9.1"
+
   Seq(
     "com.typesafe.akka" %% "akka-http"                         % akkaHttpV,
     "com.typesafe.akka" %% "akka-http-spray-json"              % akkaHttpV,
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaV,
     "org.slf4s"         %% "slf4s-api"                         % slf4sV,
     "ch.qos.logback"    %  "logback-classic"                   % logbackV,
-    "com.github.jeroenr" %% "k8s-svc-discovery"                % "0.6",
-    "org.scalatest"     %% "scalatest"                         % scalaTestV       % Test
+    "com.github.jeroenr" %% "k8s-svc-discovery"                % k8sSvcDiscoveryV,
+    "org.specs2"        %% "specs2-core"                       % specs2V       % Test,
+    "com.typesafe.akka" %% "akka-http-testkit"                 % akkaHttpV     % Test,
+    "com.typesafe.akka" %% "akka-testkit"                      % akkaV            % Test
   )
 }
 

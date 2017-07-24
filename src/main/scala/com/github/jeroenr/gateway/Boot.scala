@@ -1,16 +1,18 @@
-package com.github.cupenya.gateway
+package com.github.jeroenr.gateway
 
 import akka.actor.{ ActorSystem, Props }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.stream.ActorMaterializer
-import com.github.cupenya.gateway.client.AuthServiceClient
-import com.github.cupenya.gateway.health._
+import com.github.jeroenr.gateway.client.AuthServiceClient
+import com.github.jeroenr.gateway.health._
 import com.github.jeroenr.service.discovery._
 import com.github.jeroenr.service.discovery.health._
-import com.github.cupenya.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
-import com.github.cupenya.gateway.configuration._
-import com.github.cupenya.gateway.model._
+import com.github.jeroenr.gateway.server.{ ApiDashboardService, CorsRoute, GatewayHttpService }
+import com.github.jeroenr.gateway.configuration._
+import com.github.jeroenr.gateway.model._
+import akka.util.Timeout
+import scala.language.postfixOps
 
 object Boot extends App
     with GatewayHttpService
@@ -22,6 +24,7 @@ object Boot extends App
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val materializer = ActorMaterializer()
+  implicit val timeout = Timeout(Config.DEFAULT_TIMEOUT)
 
   private val gatewayInterface = Config.gateway.interface
   private val gatewayPort = Config.gateway.port
@@ -59,31 +62,27 @@ object Boot extends App
     binding => log.info(s"REST gateway dashboard interface bound to ${binding.localAddress} "), { t => log.error(s"Couldn't start API gateway dashboard", t); sys.exit(1) }
   )
 
-  private def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
-    val serviceUpdates = allServiceUpdates.filter { upd =>
-      Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
+  val gatewayConfigurationManager = system.actorOf(Props(new GatewayConfigurationManagerActor))
+
+  val serviceDiscoveryHealthChecks = if (Config.integration.polling.enabled) {
+    def handleServiceUpdates[T <: ServiceUpdate](allServiceUpdates: List[T]) = {
+      val serviceUpdates = allServiceUpdates.filter { upd =>
+        Config.integration.kubernetes.namespaces.isEmpty || Config.integration.kubernetes.namespaces.contains(upd.namespace)
+      }
+      log.debug(s"Updating services $serviceUpdates")
+      gatewayConfigurationManager ! GatewayConfigurationManagerActor.SetGatewayTargets(serviceUpdates.map(serviceUpdate =>
+        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)))
     }
-    val currentResources = GatewayConfigurationManager.currentConfig().targets.keys.toList
-    val toDelete = currentResources.filterNot(serviceUpdates.map(_.resource).contains)
-    log.debug(s"Deleting $toDelete")
-    toDelete.foreach(GatewayConfigurationManager.deleteGatewayTarget)
 
-    // TODO: handle config updates
-    val newResources = serviceUpdates.filterNot(su => currentResources.contains(su.resource))
-    log.debug(s"New services $newResources")
-    newResources.foreach(serviceUpdate => {
-      val gatewayTarget =
-        GatewayTarget(serviceUpdate.resource, serviceUpdate.address, serviceUpdate.port, serviceUpdate.secured)
-      log.info(s"Registering new gateway target $gatewayTarget")
-      GatewayConfigurationManager.upsertGatewayTarget(gatewayTarget)
-    })
-  }
+    val serviceDiscoveryAgent =
+      //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
+      system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient, handleServiceUpdates)))
 
-  val serviceDiscoveryAgent =
-    //        system.actorOf(Props(new ServiceDiscoveryAgent[StaticServiceUpdate](new StaticServiceListSource)))
-    system.actorOf(Props(new ServiceDiscoveryAgent[KubernetesServiceUpdate](new KubernetesServiceDiscoveryClient, handleServiceUpdates)))
+    serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
 
-  serviceDiscoveryAgent ! ServiceDiscoveryAgent.WatchServices
+    List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent))
+  } else Nil
 
-  override def checks: List[HealthCheck] = List(new ServiceDiscoveryHealthCheck(serviceDiscoveryAgent), new AuthServiceHealthCheck(authClient))
+  override def checks: List[HealthCheck] =
+    serviceDiscoveryHealthChecks ++ List(new AuthServiceHealthCheck(authClient))
 }

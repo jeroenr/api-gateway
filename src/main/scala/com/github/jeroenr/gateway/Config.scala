@@ -1,12 +1,15 @@
-package com.github.cupenya.gateway
+package com.github.jeroenr.gateway
 
-import java.util.concurrent.TimeUnit
-
+import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
+
 import scala.collection.JavaConversions._
+import scala.util.Try
+import scala.language.postfixOps
 
 object Config {
   private val rootConfig = ConfigFactory.load()
+  val DEFAULT_TIMEOUT = 10 seconds
 
   object gateway {
     private val config = rootConfig.getConfig("gateway")
@@ -36,6 +39,11 @@ object Config {
       val port = k8sConfig.getInt("port")
       val token = k8sConfig.getString("token")
       val namespaces = k8sConfig.getStringList("namespaces").toList
+    }
+
+    object polling {
+      private val pollingConfig = config.getConfig("polling")
+      val enabled = Try(pollingConfig.getBoolean("enabled")).getOrElse(false)
     }
   }
 }
