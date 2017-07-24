@@ -26,7 +26,7 @@ Most of the configurable options are available as environment variables. Below i
 * ```AUTH_PORT=7070```
 * ```K8S_API_HOST=localhost```
 * ```K8S_API_PORT=8001```
-* ```K8S_API_TOKEN=123456```
+* ```K8S_API_TOKEN=```
 
 For a Kubernetes configuration example see the [sample descriptor file](https://github.com/jeroenr/api-gateway/blob/master/k8s-descriptor.yaml).
 
